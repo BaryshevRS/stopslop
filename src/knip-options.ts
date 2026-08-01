@@ -66,7 +66,10 @@ export async function createKnipOptions(
 
     // These paths are the only bootstrap-derived values consumed by a session.
     // parsedConfig/workspaces/catalog contents have already been loaded.
-    knipOptions.cwd = root;
+    // Knip keeps graph keys and its cwd in POSIX form, including on Windows.
+    // Rebinding the bootstrap cwd with native backslashes makes describeFile()
+    // miss every graph node by exact-key lookup.
+    knipOptions.cwd = root.replaceAll('\\', '/');
     knipOptions.cacheLocation = join(root, 'node_modules', '.cache', 'knip');
     knipOptions.config = undefined;
     knipOptions.configFilePath = undefined;

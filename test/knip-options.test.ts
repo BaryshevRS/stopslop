@@ -45,7 +45,7 @@ describe('stopslop Knip options', () => {
 
     const options = await createKnipOptions(root, config);
 
-    expect(options.cwd).toBe(root);
+    expect(options.cwd).toBe(root.replaceAll('\\', '/'));
     expect(options.parsedConfig.entry).toEqual(['src/entry.ts']);
     expect(options.parsedConfig.project).toEqual(['src/**/*.ts']);
     expect(options.parsedConfig.workspaces).toEqual({
@@ -62,7 +62,7 @@ describe('stopslop Knip options', () => {
     await expect(
       createKnipOptions(root, { knip: { entry: ['src/entry.ts'] } }),
     ).resolves.toMatchObject({
-      cwd: root,
+      cwd: root.replaceAll('\\', '/'),
       parsedConfig: { entry: ['src/entry.ts'] },
     });
   });
@@ -96,7 +96,7 @@ describe('stopslop Knip options', () => {
       knip: { workspaces: { 'packages/*': { entry: ['src/index.ts'] } } },
     });
 
-    expect(options.cwd).toBe(root);
+    expect(options.cwd).toBe(root.replaceAll('\\', '/'));
     expect(options.workspaces).toEqual(['packages/*']);
     expect(options.parsedConfig.workspaces).toEqual({
       'packages/*': { entry: ['src/index.ts'] },

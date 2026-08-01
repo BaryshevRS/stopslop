@@ -141,3 +141,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# nx cache, created when Knip loads the nx plugin while analyzing a workspace
+.nx/
+info
+# Raw benchmark material — analysis input, not for the repo. Digested
+# conclusions live in docs/score.md and src/corpus.ts.
+/STATS.md
+/LIST.md
+/WM_TEST.md

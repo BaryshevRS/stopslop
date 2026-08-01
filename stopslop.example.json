@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/stopslop/schema.json",
+  "cognitiveComplexity": 15,
+  "godModule": { "minMembers": 15, "minClusters": 3, "minComplexity": 150, "sizeMembers": 37, "sizeComplexity": 350 },
+  "godClass": { "minMembers": 12, "minClusters": 3, "minComplexity": 90, "sizeMembers": 30, "sizeComplexity": 200 },
+  "multipleExportedClasses": { "maxPerFile": 1 },
+  "duplicates": { "minTokens": 50, "minLines": 5, "ignoreIdentifiers": false, "ignoreLiterals": false },
+  "deadCode": { "exports": true, "dependencies": true, "files": true, "orphans": true, "production": false },
+  "knip": {
+    "workspaces": {
+      ".": { "entry": ["src/index.ts"] },
+      "packages/*": { "entry": ["src/index.ts"], "project": ["src/**/*.ts"] }
+    }
+  },
+  "score": {
+    "weights": { "god": 0.35, "duplication": 0.25, "complexity": 0.2, "deadCode": 0.2 },
+    "budgets": { "god": 0.1, "duplication": 0.3, "complexity": 4, "deadCode": 4 },
+    "floors": { "god": 0, "duplication": 0.05, "complexity": 0, "deadCode": 0 }
+  },
+  "hubFanInRatio": 0.5,
+  "ignore": ["**/*.generated.ts"]
+}

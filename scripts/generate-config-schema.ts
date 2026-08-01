@@ -142,7 +142,7 @@ if (process.argv.includes('--check')) {
   } catch {
     // The error below explains how to create the missing artifact.
   }
-  if (current !== generated) {
+  if (current.replaceAll('\r\n', '\n') !== generated) {
     throw new Error('schema.json is stale; run `pnpm schema:generate` and commit the result');
   }
 } else {

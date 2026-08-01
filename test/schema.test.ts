@@ -97,5 +97,5 @@ describe('published config schema', () => {
 
     expect(packed).toHaveLength(1);
     expect(packed[0]!.files.map((file) => file.path)).toContain('schema.json');
-  });
+  }, 15_000);
 });

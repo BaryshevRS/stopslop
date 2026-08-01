@@ -21,15 +21,18 @@ be described in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## First publish: bootstrap trusted publishing
 
-An unclaimed npm package cannot yet have a trusted publisher. Bootstrap only the
-first release with a short-lived granular npm token:
+An unclaimed npm package cannot have a trusted publisher yet. Publish the first
+release interactively from a maintainer machine, then configure the same
+tokenless OIDC flow used by later releases:
 
-1. Enable two-factor authentication on the npm account.
-2. Create a granular token allowed to publish public packages and add it to the
-   GitHub repository as the `NPM_TOKEN` Actions secret.
-3. Push the release commit to `main`, then create and push `v0.1.0`.
-4. Confirm that npm shows provenance for `stopslop@0.1.0`.
-5. With npm CLI 11.5.1 or newer, configure the permanent OIDC publisher:
+1. Enable two-factor authentication on the npm account and run `npm login`.
+2. From the release-checked commit, run:
+
+   ```sh
+   npm publish --ignore-scripts --access public
+   ```
+
+3. With npm CLI 11.15.0 or newer, configure the permanent OIDC publisher:
 
    ```sh
    npm trust github stopslop \
@@ -39,11 +42,8 @@ first release with a short-lived granular npm token:
      --yes
    ```
 
-6. Delete the `NPM_TOKEN` repository secret. Future tagged releases use GitHub
-   OIDC trusted publishing and carry provenance without a long-lived token.
-
-Do not run `npm publish` from a laptop: automatic provenance generation is
-supported by npm in GitHub Actions, not in a local shell.
+4. Future tagged releases publish from GitHub Actions with OIDC and no npm
+   secret. GitHub-hosted trusted publishing adds provenance automatically.
 
 ## Subsequent releases
 

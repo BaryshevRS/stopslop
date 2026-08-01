@@ -248,7 +248,7 @@ function countLines(source: string): number {
 /** Resolved path, or the input when it does not exist — discover reports that. */
 function realPath(absPath: string): string {
   try {
-    return realpathSync(absPath);
+    return realpathSync.native(absPath);
   } catch {
     return absPath;
   }

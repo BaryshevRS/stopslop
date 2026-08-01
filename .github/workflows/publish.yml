@@ -16,14 +16,11 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - run: corepack enable
       - run: corepack prepare pnpm@10.1.0 --activate
@@ -35,11 +32,5 @@ jobs:
           "import pkg from './package.json' with { type: 'json' };
           if (process.env.GITHUB_REF_NAME !== 'v' + pkg.version) process.exit(1)"
       - run: pnpm release:check
-      - name: Publish first release with a temporary npm token
-        if: env.NPM_TOKEN != ''
-        run: npm publish --ignore-scripts --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-      - name: Publish through npm trusted publishing
-        if: env.NPM_TOKEN == ''
-        run: npm publish --ignore-scripts --access public
+      # No NODE_AUTH_TOKEN: npm authenticates with the workflow's OIDC token.
+      - run: npm publish --ignore-scripts --access public

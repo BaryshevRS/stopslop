@@ -33,7 +33,7 @@ first release with a short-lived granular npm token:
 
    ```sh
    npm trust github stopslop \
-     --repo BaryshevRS/stop-slop \
+     --repo BaryshevRS/stopslop \
      --file publish.yml \
      --allow-publish \
      --yes

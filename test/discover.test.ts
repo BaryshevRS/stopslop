@@ -1,6 +1,6 @@
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { discover, globToRegExp } from '../src/discover.js';
 
@@ -44,7 +44,9 @@ describe('discover', () => {
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
   it('finds real source and applies default + user excludes', () => {
-    const files = discover(root, { ignore: ['**/skip.ts'] }).map((f) => f.replace(root + '/', ''));
+    const files = discover(root, { ignore: ['**/skip.ts'] }).map((f) =>
+      relative(root, f).split(sep).join('/'),
+    );
     expect(files).toContain('src/a.ts');
     expect(files).toContain('src/b.tsx');
     expect(files).toContain('src/keep.js');

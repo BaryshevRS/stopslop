@@ -6,11 +6,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BaryshevRS/stop-slop.git"
+    "url": "git+https://github.com/BaryshevRS/stopslop.git"
   },
-  "homepage": "https://github.com/BaryshevRS/stop-slop#readme",
+  "homepage": "https://github.com/BaryshevRS/stopslop#readme",
   "bugs": {
-    "url": "https://github.com/BaryshevRS/stop-slop/issues"
+    "url": "https://github.com/BaryshevRS/stopslop/issues"
   },
   "bin": {
     "stopslop": "dist/cli.js"

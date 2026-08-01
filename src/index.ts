@@ -145,9 +145,11 @@ export async function analyzeGitBase(
 ): Promise<AnalyzeResult> {
   const absRoot = realPath(resolve(root));
   const gitCwd = existsSync(absRoot) && !statSync(absRoot).isDirectory() ? dirname(absRoot) : absRoot;
-  const repositoryRoot = (
-    await runGit(gitCwd, ['rev-parse', '--show-toplevel'], 'find the Git repository root')
-  ).trim();
+  const repositoryRoot = realPath(
+    (
+      await runGit(gitCwd, ['rev-parse', '--show-toplevel'], 'find the Git repository root')
+    ).trim(),
+  );
   const rootWithinRepository = relative(repositoryRoot, absRoot);
   const commit = (
     await runGit(

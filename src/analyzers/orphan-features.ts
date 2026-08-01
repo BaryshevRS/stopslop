@@ -30,7 +30,9 @@ export function findOrphanFeatures(options: OrphanOptions): Finding[] {
   for (const file of options.files) {
     let described: File | undefined;
     try {
-      described = options.describeFile(file.absPath);
+      // Knip stores Windows graph keys as POSIX paths. Its session API accepts
+      // absolute paths but does not normalize an already-absolute input.
+      described = options.describeFile(file.absPath.replaceAll('\\', '/'));
     } catch {
       continue; // a file Knip cannot describe simply yields no candidates
     }

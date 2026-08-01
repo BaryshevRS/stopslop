@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -85,7 +85,7 @@ describe('published config schema', () => {
       const env: NodeJS.ProcessEnv = { ...process.env, npm_config_cache: npmCache };
       delete env.npm_config_verify_deps_before_run;
       packed = JSON.parse(
-        execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+        execSync('npm pack --dry-run --json --ignore-scripts', {
           cwd: process.cwd(),
           encoding: 'utf8',
           env,

@@ -1,6 +1,6 @@
 # stopslop
 
-[![slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stop-slop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stop-slop)
+[![slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop)
 
 > **0.1 preview.** The CLI and report formats are usable in CI; compatibility
 > tiers and the pre-1.0 change policy are documented in

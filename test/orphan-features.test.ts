@@ -46,6 +46,26 @@ function run(file: ParsedFile, descriptor: File): Finding[] {
 const ORPHAN = sourceFile('src/discount.ts', 'export function applyDiscount(t) {\n  return t * 0.9;\n}\n');
 
 describe('orphan features', () => {
+  it('passes an absolute Windows path to describeFile in POSIX form', () => {
+    const parsed = sourceFile('src/discount.ts', 'export const discount = 10;');
+    const file: ParsedFile = {
+      ...parsed,
+      absPath: 'C:\\repo\\src\\discount.ts',
+    };
+    const describedPaths: string[] = [];
+
+    findOrphanFeatures({
+      root: ROOT,
+      files: [file],
+      describeFile: (absPath) => {
+        describedPaths.push(absPath);
+        return undefined;
+      },
+    });
+
+    expect(describedPaths).toEqual(['C:/repo/src/discount.ts']);
+  });
+
   it('reports a symbol kept alive by nothing but its own paired test', () => {
     const findings = run(ORPHAN, described('applyDiscount', ['test/discount.test.ts']));
 

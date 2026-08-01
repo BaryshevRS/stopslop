@@ -15,4 +15,4 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Committed baselines and temporary-worktree Git-base gating for new findings.
 - Configurable thresholds, score calibration, and a published JSON Schema.
 
-[0.1.0]: https://github.com/BaryshevRS/stop-slop/releases/tag/v0.1.0
+[0.1.0]: https://github.com/BaryshevRS/stopslop/releases/tag/v0.1.0

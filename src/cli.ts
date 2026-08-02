@@ -6,6 +6,7 @@ import { toJson } from './report/json.js';
 import { toSarif } from './report/sarif.js';
 import { toBadge } from './report/badge.js';
 import { applyBaseline, readBaseline, writeBaseline } from './baseline.js';
+import { assertAnalysisComplete } from './analysis-completeness.js';
 
 type Format = 'text' | 'json' | 'sarif' | 'shields';
 
@@ -103,6 +104,7 @@ async function main(): Promise<void> {
     const result = args.base
       ? await analyzeGitBase(args.path, args.base, config)
       : await analyze(args.path, config);
+    assertAnalysisComplete(result);
 
     // Record mode: write today's findings and leave. Independent of --format.
     if (args.updateBaseline) {

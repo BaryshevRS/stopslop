@@ -149,7 +149,7 @@ function coreScore(
   return totalWeight > 0 ? (100 * weighted) / totalWeight : 0;
 }
 
-/** Bands are labels for the score, not extra thresholds — same preliminary caveat. */
+/** Bands are labels for the score, not extra detection thresholds. */
 export function levelFor(score: number): SlopLevel {
   if (score < 10) return 'clean';
   if (score < 25) return 'low';

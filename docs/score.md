@@ -63,9 +63,8 @@ measured**, not invented. Every non-zero anchor comes from a 41-repo / 9.4 MLOC
 benchmark run over mature TypeScript OSS (angular, react, playwright, nextjs,
 svelte, vue-core, nest, vite, material-ui and the like — the corpus ships in
 `src/corpus.ts`), by one rule: a *floor* is what ordinary repos carry (~p25), a
-*budget* is "past anything in the reference corpus" (~max/p90). All of it is
-flagged `preliminary` and configurable (`score.weights`, `score.budgets`,
-`score.floors`).
+*budget* is "past anything in the reference corpus" (~max/p90). The calibrated
+defaults remain configurable (`score.weights`, `score.budgets`, `score.floors`).
 
 - **Weights** encode what we claim slop *is*. Misplaced structure (god units) and
   copy-paste are the expensive kinds — they are what an agent produces when it

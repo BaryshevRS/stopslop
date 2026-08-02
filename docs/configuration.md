@@ -3,8 +3,11 @@
 stopslop reads `stopslop.json` from the analyzed directory (or `--config <path>`).
 Every field is optional and merged over the defaults, so a config only needs the
 knobs you want to change. Defaults are calibrated on a 22-repo TypeScript corpus
-(see [thresholds.md](thresholds.md)) and marked *preliminary* in output until
-validated further.
+(see [thresholds.md](thresholds.md)).
+
+The CLI validates StopSlop-owned fields at runtime as well as publishing the
+schema: unknown properties, wrong types, and out-of-range values are errors
+rather than silently ignored configuration.
 
 ## Full example (all defaults)
 

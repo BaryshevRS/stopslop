@@ -159,6 +159,9 @@ stopslop [path]            analyze a directory or file (default: .)
 
 Exit codes: `0` clean · `1` findings · `2` error.
 
+Invalid configuration, zero supported source files, and hard analysis errors
+exit `2` before StopSlop emits a report, badge, or baseline.
+
 ### For an agent loop
 
 ```bash
@@ -304,8 +307,7 @@ top-level `entry` and `project` when multiple workspaces are present.
 
 **Full reference with every field, defaults, and examples:
 [docs/configuration.md](docs/configuration.md).** Defaults are calibrated on a
-22-repo TypeScript corpus ([docs/thresholds.md](docs/thresholds.md)) and marked
-*preliminary* in output until validated further.
+22-repo TypeScript corpus ([docs/thresholds.md](docs/thresholds.md)).
 
 ## How it works & why the numbers
 

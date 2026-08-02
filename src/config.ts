@@ -46,9 +46,8 @@ export const DEFAULT_SCORE: ScoreConfig = {
 };
 
 /**
- * Default thresholds. First-pass calibrated on the 22-repo corpus (see
- * docs/thresholds.md); still flagged PRELIMINARY until validated against the
- * Stage-4 victim repo. The god gates are a conjunction (members AND clusters AND
+ * Default thresholds calibrated on the 22-repo corpus (see
+ * docs/thresholds.md). The god gates are a conjunction (members AND clusters AND
  * complexity), so `minMembers` is kept sensitive — precision comes from the
  * cluster + complexity requirement, not from a high member floor.
  * Full reference: docs/configuration.md.
@@ -80,7 +79,7 @@ export const DEFAULT_CONFIG: ResolvedConfig = {
   score: DEFAULT_SCORE,
   hubFanInRatio: 0.5,
   ignore: [],
-  preliminary: true,
+  preliminary: false,
 };
 
 /**
@@ -106,6 +105,129 @@ export interface StopSlopConfig {
   };
   hubFanInRatio?: number;
   ignore?: string[];
+}
+
+type ConfigObject = Record<string, unknown>;
+type PropertyValidator = (value: unknown, path: string) => void;
+
+function invalidConfig(path: string, expectation: string): never {
+  throw new Error(`Invalid config at ${path}: ${expectation}`);
+}
+
+function configObject(value: unknown, path: string): ConfigObject {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    invalidConfig(path, 'expected an object');
+  }
+  return value as ConfigObject;
+}
+
+function validateProperties(
+  value: unknown,
+  path: string,
+  validators: Record<string, PropertyValidator>,
+): void {
+  const object = configObject(value, path);
+  for (const [property, propertyValue] of Object.entries(object)) {
+    const propertyPath = path === '$' ? property : `${path}.${property}`;
+    const validate = validators[property];
+    if (!validate) invalidConfig(propertyPath, 'unknown property');
+    if (propertyValue !== undefined) validate(propertyValue, propertyPath);
+  }
+}
+
+function validateNumber(value: unknown, path: string, minimum = 0, maximum?: number): void {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    invalidConfig(path, 'expected a finite number');
+  }
+  if (value < minimum || (maximum !== undefined && value > maximum)) {
+    const range = maximum === undefined ? `at least ${minimum}` : `between ${minimum} and ${maximum}`;
+    invalidConfig(path, `expected a number ${range}`);
+  }
+}
+
+function validateBoolean(value: unknown, path: string): void {
+  if (typeof value !== 'boolean') invalidConfig(path, 'expected a boolean');
+}
+
+function validateString(value: unknown, path: string): void {
+  if (typeof value !== 'string') invalidConfig(path, 'expected a string');
+}
+
+function validateObjectOrFalse(
+  value: unknown,
+  path: string,
+  validators: Record<string, PropertyValidator>,
+): void {
+  if (value !== false) validateProperties(value, path, validators);
+}
+
+const nonNegativeNumber: PropertyValidator = (value, path) => validateNumber(value, path);
+const booleanValue: PropertyValidator = (value, path) => validateBoolean(value, path);
+
+const godValidators: Record<string, PropertyValidator> = {
+  minMembers: nonNegativeNumber,
+  minClusters: nonNegativeNumber,
+  minComplexity: nonNegativeNumber,
+  sizeMembers: nonNegativeNumber,
+  sizeComplexity: nonNegativeNumber,
+};
+
+const scoreSignalValidators: Record<string, PropertyValidator> = {
+  god: nonNegativeNumber,
+  complexity: nonNegativeNumber,
+  duplication: nonNegativeNumber,
+  deadCode: nonNegativeNumber,
+};
+
+function validateConfig(value: unknown): asserts value is StopSlopConfig | undefined {
+  if (value === undefined) return;
+
+  const topLevelValidators = {
+    $schema: validateString,
+    cognitiveComplexity: (entry, path) => {
+      if (entry !== false) validateNumber(entry, path);
+    },
+    godModule: (entry, path) => validateObjectOrFalse(entry, path, godValidators),
+    godClass: (entry, path) => validateObjectOrFalse(entry, path, godValidators),
+    multipleExportedClasses: (entry, path) =>
+      validateObjectOrFalse(entry, path, { maxPerFile: nonNegativeNumber }),
+    duplicates: (entry, path) =>
+      validateObjectOrFalse(entry, path, {
+        minTokens: (nested, nestedPath) => validateNumber(nested, nestedPath, 1),
+        minLines: (nested, nestedPath) => validateNumber(nested, nestedPath, 1),
+        ignoreIdentifiers: booleanValue,
+        ignoreLiterals: booleanValue,
+      }),
+    deadCode: (entry, path) =>
+      validateObjectOrFalse(entry, path, {
+        exports: booleanValue,
+        dependencies: booleanValue,
+        files: booleanValue,
+        orphans: booleanValue,
+        production: booleanValue,
+      }),
+    knip: (entry, path) => {
+      configObject(entry, path);
+    },
+    score: (entry, path) =>
+      validateProperties(entry, path, {
+        weights: (nested, nestedPath) =>
+          validateProperties(nested, nestedPath, scoreSignalValidators),
+        budgets: (nested, nestedPath) =>
+          validateProperties(nested, nestedPath, scoreSignalValidators),
+        floors: (nested, nestedPath) =>
+          validateProperties(nested, nestedPath, scoreSignalValidators),
+      }),
+    hubFanInRatio: (entry, path) => validateNumber(entry, path, 0, 1),
+    ignore: (entry, path) => {
+      if (!Array.isArray(entry)) invalidConfig(path, 'expected an array of strings');
+      for (let index = 0; index < entry.length; index += 1) {
+        validateString(entry[index], `${path}[${index}]`);
+      }
+    },
+  } satisfies Record<keyof StopSlopConfig, PropertyValidator>;
+
+  validateProperties(value, '$', topLevelValidators);
 }
 
 function resolveCognitive(raw: number | false | undefined): CognitiveGate {
@@ -149,6 +271,7 @@ function resolveScore(raw: StopSlopConfig['score']): ScoreConfig {
 }
 
 export function resolveConfig(raw: StopSlopConfig | undefined): ResolvedConfig {
+  validateConfig(raw);
   const c = raw ?? {};
   return {
     cognitiveComplexity: resolveCognitive(c.cognitiveComplexity),
@@ -175,6 +298,8 @@ export function loadConfig(dir: string, explicitPath?: string): ResolvedConfig {
     if (explicitPath) {
       throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
     }
-    return resolveConfig(undefined);
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT' || code === 'ENOTDIR') return resolveConfig(undefined);
+    throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
   }
 }

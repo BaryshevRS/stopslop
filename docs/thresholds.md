@@ -10,8 +10,9 @@ Two lenses on the same corpus:
   entities ≤ N. Kept for reference; it skews high because large entities are
   both more complex and hold more volume.
 
-Corpus: `/Users/rock/Projects/clone-alert/bench/repos` — 22 repos, 65817 analyzed files
-(tests, fixtures, generated and bundled code excluded).
+Corpus: 22 TypeScript repositories, 65,817 analyzed files (tests, fixtures,
+generated and bundled code excluded). The per-repository counts are listed
+below.
 
 ## Count percentiles (basis for defaults)
 
@@ -55,21 +56,29 @@ Corpus: `/Users/rock/Projects/clone-alert/bench/repos` — 22 repos, 65817 analy
 | responsibility groups (≥2) | 2819 | 1 | 1 | 2 | 2 | 4 |
 | Σ cognitive complexity | 2819 | 51 | 128 | 280 | 455 | 1175 |
 
-## Recommended defaults
+## Final defaults
 
-A god finding should be rare by construction — around count p95–p99.
+A god finding is rare by construction, but the detector does not compare each
+metric with an independent p95 cutoff. It has two alternative axes:
 
-| setting | count p95 | count p99 | recommended |
-|---|---|---|---|
-| `cognitiveComplexity` | 13 | 38 | **15** (Sonar-floored) |
-| `godClass.minMembers` | 32 | 64 | **32** |
-| `godClass.minComplexity` | 93 | 207 | **93** |
-| `godModule.minMembers` | 22 | 37 | **22** |
-| `godModule.minComplexity` | 167 | 354 | **167** |
+- **dispersion** requires members **and** responsibility groups **and** total
+  complexity together, so its member floor can stay sensitive;
+- **size/WMC** requires both a high member count and high total complexity, even
+  when the unit is cohesive.
 
-`minClusters` stays at **3** for both: the group split (≥2 members) already makes
-extra groups rare, and 3 unrelated responsibility groups is the smallest count
-that reads as "this should be several units."
+| gate | members | groups | Σ complexity | final setting |
+|---|---:|---:|---:|---|
+| cognitive complexity | — | — | 15 | `cognitiveComplexity: 15` |
+| class dispersion | 12 | 3 | 90 | `godClass: 12 / 3 / 90` |
+| class size/WMC | 30 | — | 200 | `godClass: 30 / 200` |
+| module dispersion | 15 | 3 | 150 | `godModule: 15 / 3 / 150` |
+| module size/WMC | 37 | — | 350 | `godModule: 37 / 350` |
+
+The size thresholds sit near the count p95–p99 tail. On the dispersion axis,
+three substantive groups are already rare (between class p95 and p99; module
+p99), and the conjunction with complexity supplies the precision. Raising the
+member floor itself to p95 would make the conjunction unnecessarily blind to
+smaller units that clearly contain three unrelated responsibilities.
 
 ## Per-repo file counts
 - angular: 1971 files

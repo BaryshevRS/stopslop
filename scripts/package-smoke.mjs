@@ -77,6 +77,50 @@ try {
     consumerDirectory,
   );
 
+  const sourceDirectory = join(consumerDirectory, 'src');
+  mkdirSync(sourceDirectory);
+  writeFileSync(
+    join(sourceDirectory, 'index.ts'),
+    "export function greet(name: string) { return `hello ${name}`; }\nprocess.stdout.write(greet('world'));\n",
+  );
+  writeFileSync(
+    join(consumerDirectory, 'stopslop.json'),
+    `${JSON.stringify(
+      {
+        deadCode: { dependencies: false },
+        knip: { entry: ['src/index.ts'], project: ['src/**/*.ts'] },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const analysis = run(installedBin, ['.', '--format', 'json'], consumerDirectory);
+  const report = JSON.parse(analysis.stdout);
+  if (report.fileCount !== 1) {
+    throw new Error(`installed CLI analyzed ${report.fileCount} files instead of 1`);
+  }
+  if (report.engines?.duplicates !== 'clone-alert' || report.engines?.deadCode !== 'knip') {
+    throw new Error('installed CLI did not report the expected analysis engines');
+  }
+  const expectedSignalCount = 4;
+  if (
+    report.slop?.signalCount !== expectedSignalCount ||
+    report.slop?.totalSignals !== expectedSignalCount
+  ) {
+    throw new Error(
+      `installed CLI ran ${report.slop?.signalCount}/${report.slop?.totalSignals} signals instead of ${expectedSignalCount}/${expectedSignalCount}`,
+    );
+  }
+  if (report.errors?.length !== 0 || report.notes?.length !== 0) {
+    throw new Error(
+      `installed CLI produced an incomplete report:\n${JSON.stringify(
+        { errors: report.errors, notes: report.notes },
+        null,
+        2,
+      )}`,
+    );
+  }
+
   process.stdout.write(
     `package smoke passed: stopslop@${manifest.version} (${manifest.files.length} files)\n`,
   );

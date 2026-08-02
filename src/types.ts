@@ -27,7 +27,7 @@ export interface Finding {
   message: string;
   /** Structured payload for --json consumers and --details rendering. */
   data?: Record<string, unknown>;
-  /** True while thresholds are pre-calibration defaults. */
+  /** Compatibility marker for reports produced with provisional thresholds. */
   preliminary?: boolean;
 }
 
@@ -201,6 +201,6 @@ export interface ResolvedConfig {
   /** fan-in fraction above which a member is treated as a hub (0..1). */
   hubFanInRatio: number;
   ignore: string[];
-  /** Whether current thresholds are pre-calibration defaults. */
+  /** Whether current thresholds are provisional. False for the calibrated defaults. */
   preliminary: boolean;
 }

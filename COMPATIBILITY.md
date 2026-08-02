@@ -1,6 +1,6 @@
 # Compatibility
 
-Last updated: 0.1.1 (2026-08-02)
+Last updated: 0.1.2 (2026-08-02)
 
 StopSlop is pre-1.0. Public surfaces are usable, but none are declared stable
 yet. Breaking preview changes require a minor release and are called out in the

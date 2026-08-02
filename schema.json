@@ -466,6 +466,9 @@
             "catalog": {
               "$ref": "#/definitions/knip/definitions/ruleValue"
             },
+            "catalogReferences": {
+              "$ref": "#/definitions/knip/definitions/ruleValue"
+            },
             "cycles": {
               "$ref": "#/definitions/knip/definitions/ruleValue"
             },
@@ -639,6 +642,7 @@
               "enumMembers",
               "namespaceMembers",
               "catalog",
+              "catalogReferences",
               "cycles"
             ]
           }
@@ -1007,6 +1011,10 @@
               "title": "markdownlint plugin configuration (https://knip.dev/reference/plugins/markdownlint)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "marko": {
+              "title": "marko plugin configuration (https://knip.dev/reference/plugins/marko)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "mdx": {
               "title": "mdx plugin configuration (https://knip.dev/reference/plugins/mdx)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1105,6 +1113,10 @@
             },
             "openapi-ts": {
               "title": "openapi-ts plugin configuration (https://knip.dev/reference/plugins/openapi-ts)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "openclaw": {
+              "title": "openclaw plugin configuration (https://knip.dev/reference/plugins/openclaw)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "orval": {
@@ -1321,6 +1333,10 @@
             },
             "tauri": {
               "title": "tauri plugin configuration (https://knip.dev/reference/plugins/tauri)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "temporal": {
+              "title": "temporal plugin configuration (https://knip.dev/reference/plugins/temporal)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "travis": {

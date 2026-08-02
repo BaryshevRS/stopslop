@@ -5,8 +5,8 @@
 Blocked on a Knip API capability. Do not treat the temporary bootstrap adapter
 as the long-term architecture.
 
-Verified against Knip 6.26.0 (currently pinned by the lockfile) and 6.27.0
-(latest when this issue was written).
+Verified against and exactly pinned to Knip 6.31.0. The packed-consumer smoke
+test runs a complete four-signal analysis against this version.
 
 ## Context
 

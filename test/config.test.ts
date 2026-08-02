@@ -1,7 +1,68 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { resolveConfig, DEFAULT_CONFIG } from '../src/config.js';
+import { loadConfig, resolveConfig, DEFAULT_CONFIG } from '../src/config.js';
+
+describe('loadConfig', () => {
+  it('throws when an automatically discovered stopslop.json contains malformed JSON', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'stopslop-config-'));
+    writeFileSync(join(dir, 'stopslop.json'), '{ malformed json', 'utf8');
+
+    try {
+      expect(() => loadConfig(dir)).toThrow();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    { caseName: 'unknown top-level property', value: { cognitiveComplexitty: 20 } },
+    { caseName: 'wrong scalar type', value: { cognitiveComplexity: '20' } },
+    { caseName: 'negative threshold', value: { godClass: { minComplexity: -1 } } },
+    { caseName: 'hubFanInRatio above 1', value: { hubFanInRatio: 1.01 } },
+    { caseName: 'ignore containing a non-string', value: { ignore: ['dist/**', 42] } },
+  ])('rejects config violating the public contract: $caseName', ({ value }) => {
+    const dir = mkdtempSync(join(tmpdir(), 'stopslop-config-'));
+    writeFileSync(join(dir, 'stopslop.json'), JSON.stringify(value), 'utf8');
+
+    try {
+      expect(() => loadConfig(dir)).toThrow();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe('resolveConfig', () => {
+  it('exposes the calibrated public defaults', () => {
+    const expected = {
+      preliminary: false,
+      cognitiveComplexity: { enabled: true, threshold: 15 },
+      godClass: {
+        enabled: true,
+        minMembers: 12,
+        minClusters: 3,
+        minComplexity: 90,
+        sizeMembers: 30,
+        sizeComplexity: 200,
+      },
+      godModule: {
+        enabled: true,
+        minMembers: 15,
+        minClusters: 3,
+        minComplexity: 150,
+        sizeMembers: 37,
+        sizeComplexity: 350,
+      },
+    };
+
+    expect({ defaultConfig: DEFAULT_CONFIG, resolvedConfig: resolveConfig(undefined) }).toMatchObject({
+      defaultConfig: expected,
+      resolvedConfig: expected,
+    });
+  });
+
   it('returns defaults for empty input', () => {
     const c = resolveConfig(undefined);
     expect(c.cognitiveComplexity).toEqual({ enabled: true, threshold: 15 });

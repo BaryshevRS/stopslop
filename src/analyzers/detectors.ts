@@ -6,7 +6,7 @@ import { computeCohesion } from './cohesion.js';
 // God Module / God Class detectors. Same cohesion engine, different extraction.
 // Gate = "enough members AND several independent clusters AND high total
 // complexity". We take the IDEA of a combined detection strategy from Marinescu
-// (ICSM 2004); the constants are ours and pre-calibration. See ARCH.md.
+// (ICSM 2004); the calibrated constants are ours. See ARCH.md.
 
 const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n);
 

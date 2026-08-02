@@ -4,6 +4,17 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-08-02
+
+### Fixed
+
+- Windows path canonicalization for Git-base gating and Knip orphan-feature analysis.
+- Cross-platform schema verification under CRLF checkouts.
+
+### Changed
+
+- npm releases now use GitHub Trusted Publishing with OIDC and no stored registry token.
+
 ## [0.1.0] - 2026-08-01
 
 ### Added
@@ -15,4 +26,5 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Committed baselines and temporary-worktree Git-base gating for new findings.
 - Configurable thresholds, score calibration, and a published JSON Schema.
 
+[0.1.1]: https://github.com/BaryshevRS/stopslop/releases/tag/v0.1.1
 [0.1.0]: https://github.com/BaryshevRS/stopslop/releases/tag/v0.1.0

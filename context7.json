@@ -1,0 +1,21 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "StopSlop",
+  "description": "Static analysis and CI gate for AI code slop in JavaScript and TypeScript: cognitive complexity, god units, duplicate code, dead code, orphan features, SARIF and baselines.",
+  "folders": ["docs"],
+  "excludeFolders": [],
+  "excludeFiles": ["CHANGELOG.md", "ISSUE_KNIP.md", "RELEASING.md"],
+  "rules": [
+    "StopSlop detects structural code patterns; it does not determine whether code was written by a human or AI.",
+    "Run StopSlop without installing it with `npx stopslop .`. It requires Node.js ^20.19.0 or >=22.12.0 and analyzes JavaScript, JSX, TypeScript and TSX.",
+    "Exit code 0 means no unaccepted findings, 1 means findings were detected, and 2 means analysis or configuration failed.",
+    "Adopt an existing repository with `--baseline .stopslop-baseline.json --update-baseline`, commit that file, then use the same `--baseline` option in CI to reject only new findings.",
+    "A baseline changes the gate and reported findings but never lowers the full-repository slop score.",
+    "Use `--base <git-ref>` to compare against a Git revision without maintaining a baseline file. CI must fetch enough Git history to resolve that ref.",
+    "Report formats are text, json, sarif and shields. Use JSON for coding agents, SARIF for code scanning and shields for the binary `AI slop | clear` badge.",
+    "StopSlop works without configuration. Put optional overrides in `stopslop.json` and use `$schema: https://unpkg.com/stopslop/schema.json` for editor validation.",
+    "Use `--fast` only when intentionally skipping duplicate-code and dead-code analysis; it runs the AST checks for cognitive complexity and god units.",
+    "The Node API is ESM and typed: call `resolveConfig()` before `analyze()`, or call `loadConfig()` to read stopslop.json. The slop score always describes the complete analyzed repository.",
+    "Clone detection is powered by Clone Alert and dead-code analysis by Knip. Configure Knip only under the `knip` property in stopslop.json."
+  ]
+}

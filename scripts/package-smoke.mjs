@@ -72,7 +72,7 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "const api = await import('stopslop'); if (typeof api.analyze !== 'function') process.exit(1)",
+      "const [api, pkg] = await Promise.all([import('stopslop'), import('stopslop/package.json', { with: { type: 'json' } })]); if (typeof api.analyze !== 'function' || pkg.default.name !== 'stopslop') process.exit(1)",
     ],
     consumerDirectory,
   );
@@ -132,8 +132,16 @@ function verifyPacklist(paths) {
   const required = [
     'LICENSE',
     'README.md',
+    'COMPATIBILITY.md',
+    'context7.json',
+    'llms.txt',
     'package.json',
     'schema.json',
+    'docs/configuration.md',
+    'docs/ci-and-automation.md',
+    'docs/node-api.md',
+    'docs/score.md',
+    'docs/thresholds.md',
     'dist/cli.js',
     'dist/index.js',
     'dist/index.d.ts',

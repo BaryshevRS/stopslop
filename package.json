@@ -1,9 +1,11 @@
 {
   "name": "stopslop",
   "version": "0.2.0",
-  "description": "Detects AI-agent slop that linters miss: over-complex functions, god modules/classes, dumped responsibilities.",
+  "description": "Static analysis for AI-generated JavaScript and TypeScript: find cognitive complexity, god classes/modules, duplicate code, dead code and orphan features.",
   "type": "module",
   "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BaryshevRS/stopslop.git"
@@ -18,12 +20,20 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
-    "./schema.json": "./schema.json"
+    "./schema.json": "./schema.json",
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist",
+    "dist/**/*",
+    "docs/**/*.md",
+    "README.md",
+    "COMPATIBILITY.md",
+    "LICENSE",
+    "llms.txt",
+    "context7.json",
     "schema.json"
   ],
   "engines": {
@@ -40,8 +50,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:package": "node scripts/package-smoke.mjs",
+    "check:clones": "clone-alert --minimum-tokens 100 --files src --format text --fail-on-violation",
     "audit:prod": "pnpm audit --prod",
-    "ci:check": "pnpm test && pnpm typecheck && pnpm build",
+    "ci:check": "pnpm test && pnpm typecheck && pnpm check:clones && pnpm build",
     "release:check": "pnpm ci:check && pnpm audit:prod && pnpm test:package",
     "prepublishOnly": "pnpm release:check",
     "calibrate": "tsx scripts/calibrate.ts",
@@ -74,12 +85,41 @@
   },
   "keywords": [
     "ai",
+    "ai-code",
+    "ai-generated-code",
+    "ai-code-quality",
+    "ai-slop",
     "slop",
+    "slop-detector",
+    "vibe-coding",
+    "static-analysis",
+    "code-analysis",
+    "code-quality",
     "code-smell",
+    "technical-debt",
+    "javascript",
+    "typescript",
+    "jsx",
+    "tsx",
+    "cli",
+    "lint",
+    "ci",
+    "quality-gate",
+    "code-scanning",
+    "github-actions",
+    "sarif",
+    "baseline",
     "god-class",
     "god-module",
     "cognitive-complexity",
     "lcom",
-    "static-analysis"
+    "cohesion",
+    "duplicate-code",
+    "copy-paste-detector",
+    "dead-code",
+    "unused-code",
+    "orphan-code",
+    "monorepo",
+    "code-review"
   ]
 }

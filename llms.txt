@@ -1,0 +1,25 @@
+# StopSlop
+
+> Static analysis and CI gating for structural AI code slop in JavaScript and TypeScript. StopSlop finds cognitive complexity, god classes and modules, duplicate code, dead code, orphan features, and responsibility boundaries. It reports code patterns, not authorship.
+
+Run without installing: `npx stopslop .`. Exit codes are `0` for a clear gate, `1` for detected findings, and `2` for an analysis error. Requires Node.js 20.19+ or 22.12+.
+
+## Start here
+
+- [Overview, installation, CLI and badge](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/README.md)
+- [Configuration reference](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/configuration.md)
+- [CI baselines, Git comparison, SARIF and agent reports](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/ci-and-automation.md)
+- [Typed Node.js API](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/node-api.md)
+
+## How it works
+
+- [Score formula and interpretation](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/score.md)
+- [Default thresholds and calibration](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/thresholds.md)
+- [Architecture and methodology](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/ARCH.md)
+- [Compatibility policy](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/COMPATIBILITY.md)
+
+## Package
+
+- [npm package](https://www.npmjs.com/package/stopslop)
+- [JSON Schema](https://unpkg.com/stopslop/schema.json)
+- [GitHub repository](https://github.com/BaryshevRS/stopslop)

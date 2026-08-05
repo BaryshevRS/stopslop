@@ -1,6 +1,7 @@
 # StopSlop
 
-[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop)
+[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop) [![clone-alert: 0 clones](https://img.shields.io/badge/clone--alert-0%20clones-brightgreen)](https://github.com/BaryshevRS/clone-alert) [![CI](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml/badge.svg)](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/stopslop.svg)](https://www.npmjs.com/package/stopslop) [![license](https://img.shields.io/npm/l/stopslop.svg)](./LICENSE) [![node](https://img.shields.io/node/v/stopslop.svg)](https://nodejs.org) [![types](https://img.shields.io/npm/types/stopslop.svg)](https://www.npmjs.com/package/stopslop)
+<!-- clone-alert badge: pnpm exec clone-alert --minimum-tokens 100 --files src --format shields --no-fail-on-violation -->
 
 **Stop AI-generated code from becoming instant legacy.**
 
@@ -8,9 +9,10 @@ Coding agents are good at making code compile. They are also good at making too
 much of it: tangled functions, god files, copied blocks, dead exports, and entire
 features that pass their own tests but are never connected to the application.
 
-StopSlop catches that structural overproduction before it becomes permanent.
-It complements ESLint, Biome, and Oxlint rather than repeating their style and
-type rules.
+StopSlop is a static analyzer for JavaScript and TypeScript codebases under
+heavy AI-agent change. It catches that structural overproduction before it
+becomes permanent. It complements ESLint, Biome, Oxlint, SonarQube, and
+SonarCloud rather than repeating their style and type rules.
 
 ```bash
 npx stopslop .
@@ -19,7 +21,7 @@ npx stopslop .
 It runs locally against JavaScript and TypeScript. No account. No source-code
 upload.
 
-> **0.1 preview:** Requires Node.js 20.19+ or 22.12+. Public surfaces and the
+> **Pre-1.0 preview:** Requires Node.js 20.19+ or 22.12+. Public surfaces and the
 > pre-1.0 change policy are documented in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## What it catches
@@ -56,6 +58,14 @@ Or pin it in the project so local runs and CI use the same version:
 ```bash
 npm install --save-dev stopslop
 npx stopslop .
+
+# pnpm
+pnpm add -D stopslop
+pnpm exec stopslop .
+
+# Yarn
+yarn add --dev stopslop
+yarn stopslop .
 ```
 
 The default report gives you the full repository score, the signal densities,
@@ -170,6 +180,9 @@ For GitHub Code Scanning, emit SARIF before propagating the gate failure:
 npx stopslop . --base origin/main --format sarif > stopslop.sarif
 ```
 
+See [CI and automation](docs/ci-and-automation.md) for a complete workflow that
+uploads SARIF and still preserves StopSlop's exit code.
+
 ## Send the findings back to the agent
 
 The JSON report is stable and versioned. Feed it into the next coding-agent turn
@@ -242,6 +255,24 @@ See [docs/configuration.md](docs/configuration.md) for every field, default, and
 Knip workspace example. See [stopslop.example.json](stopslop.example.json) for a
 complete configuration.
 
+## Node.js API
+
+StopSlop ships ESM JavaScript and TypeScript declarations for programmatic use:
+
+```ts
+import { analyze, loadConfig } from 'stopslop';
+
+const root = process.cwd();
+const result = await analyze(root, loadConfig(root));
+
+console.log(result.slop.score, result.findings);
+```
+
+The API also exports the resolved defaults, scoring helpers, baseline helpers,
+and report types. See the [Node.js API guide](docs/node-api.md) for Git-base
+analysis, typed configuration, result semantics, and custom analyzers. The API
+is experimental before 1.0; see [COMPATIBILITY.md](COMPATIBILITY.md).
+
 ## Design and limitations
 
 - StopSlop supports `.js`, `.jsx`, `.mjs`, `.cjs`, `.ts`, and `.tsx` source.
@@ -256,12 +287,45 @@ complete configuration.
 Architecture, research references, and the boundary between published methods
 and StopSlop heuristics are documented in [ARCH.md](ARCH.md).
 
+## FAQ
+
+### Is StopSlop an AI-generated code detector?
+
+No. It does not guess who wrote a line of code. It finds structural waste that
+coding agents often produce—duplicate blocks, over-complex functions, god
+classes and modules, dead code, and orphan features—and reports the same issue
+when a human wrote it.
+
+### How is StopSlop different from ESLint, SonarQube, SonarCloud, or Knip?
+
+ESLint and similar linters focus on local rules. SonarQube and SonarCloud are
+broad quality platforms. Knip specializes in unused code and dependencies.
+StopSlop is a local, zero-account AI code quality gate focused on structural
+overproduction. It combines several signals into one report and keeps accepted
+legacy visible through its score while blocking only new findings through a
+baseline or Git comparison. Knip and
+[Clone Alert](https://www.npmjs.com/package/clone-alert) power two of those
+signals.
+
+### Can I add StopSlop to a legacy repository?
+
+Yes. Generate `.stopslop-baseline.json`, review and commit it, then use that same
+file in CI. Existing findings remain in the score and report as accepted debt;
+only unaccepted findings fail the gate.
+
+### Does StopSlop support monorepos and CI code scanning?
+
+Yes. Configure Knip workspaces under `stopslop.json#knip.workspaces` for accurate
+dead-code analysis in a monorepo. Use SARIF for GitHub Code Scanning, JSON for
+automation and coding agents, or the Shields format for a README status badge.
+
 ## Development
 
 ```bash
 pnpm install
 pnpm test
 pnpm typecheck
+pnpm check:clones
 pnpm build
 pnpm test:package
 pnpm release:check

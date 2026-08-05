@@ -1,6 +1,6 @@
 # StopSlop
 
-[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop) [![clone-alert: 0 clones](https://img.shields.io/badge/clone--alert-0%20clones-brightgreen)](https://github.com/BaryshevRS/clone-alert) [![CI](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml/badge.svg)](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/stopslop.svg)](https://www.npmjs.com/package/stopslop) [![license](https://img.shields.io/npm/l/stopslop.svg)](./LICENSE) [![node](https://img.shields.io/node/v/stopslop.svg)](https://nodejs.org) [![types](https://img.shields.io/npm/types/stopslop.svg)](https://www.npmjs.com/package/stopslop)
+[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop) [![clone-alert: 0 clones](https://img.shields.io/badge/clone--alert-0%20clones-brightgreen)](https://github.com/BaryshevRS/clone-alert) [![CI](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml/badge.svg)](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/stopslop.svg)](https://www.npmjs.com/package/stopslop)
 <!-- clone-alert badge: pnpm exec clone-alert --minimum-tokens 100 --files src --format shields --no-fail-on-violation -->
 
 **Stop AI-generated code from becoming instant legacy.**

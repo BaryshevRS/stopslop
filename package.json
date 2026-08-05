@@ -1,6 +1,6 @@
 {
   "name": "stopslop",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Static analysis for AI-generated JavaScript and TypeScript: find cognitive complexity, god classes/modules, duplicate code, dead code and orphan features.",
   "type": "module",
   "license": "MIT",

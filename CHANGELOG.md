@@ -4,6 +4,18 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/BaryshevRS/stopslop/compare/v0.2.0...v1.0.0) (2026-08-05)
+
+
+### Features
+
+* optimize npm and Context7 discovery ([9a22e93](https://github.com/BaryshevRS/stopslop/commit/9a22e9305a0f1ea2dcfd35be04abcccef7f1752a))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([14c73a6](https://github.com/BaryshevRS/stopslop/commit/14c73a6e768aa774ee840275b8f32491b9ee6a9a))
+
 ## [0.2.0](https://github.com/BaryshevRS/stopslop/compare/v0.1.2...v0.2.0) (2026-08-05)
 
 

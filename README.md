@@ -130,8 +130,11 @@ npx stopslop . \
 Commit or publish `stopslop-badge.json`, then add this Markdown:
 
 ```md
-[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/main/stopslop-badge.json)](https://github.com/OWNER/REPO)
+[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop)
 ```
+
+Replace `OWNER/REPO` in the image URL with your repository. Keep the outer link
+unchanged: clicking the badge takes readers to StopSlop.
 
 Without `--baseline` or `--base`, `clear` requires zero findings across the
 entire scan. With a baseline, it requires zero findings outside the committed

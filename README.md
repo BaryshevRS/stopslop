@@ -21,9 +21,6 @@ npx stopslop .
 It runs locally against JavaScript and TypeScript. No account. No source-code
 upload.
 
-> **Pre-1.0 preview:** Requires Node.js 20.19+ or 22.12+. Public surfaces and the
-> pre-1.0 change policy are documented in [COMPATIBILITY.md](COMPATIBILITY.md).
-
 ## What it catches
 
 - **Tangled functions** using cognitive complexity from the SonarSource

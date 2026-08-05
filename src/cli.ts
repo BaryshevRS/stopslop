@@ -115,8 +115,8 @@ async function main(): Promise<void> {
       process.exit(0);
     }
 
-    // Gate mode: report and exit on findings NOT in the baseline. The score and
-    // the badge stay the full, honest state — the baseline only gates.
+    // Gate mode: report and exit on findings NOT in the baseline. The score
+    // stays the full state; findings represent the current gate state.
     let reported = result;
     if (args.baseline) {
       const { kept, suppressed } = applyBaseline(result.findings, readBaseline(args.baseline));
@@ -128,11 +128,10 @@ async function main(): Promise<void> {
     } else if (args.format === 'sarif') {
       process.stdout.write(toSarif(reported));
     } else if (args.format === 'shields') {
-      // Badge generation, not a gate: emit the JSON and exit 0 so a CI step that
-      // regenerates the badge never fails on findings (clone-alert parity uses
-      // --no-fail-on-violation for this; here the format implies it). Uses the
-      // full result — the badge is never gated by a baseline.
-      process.stdout.write(toBadge(result));
+      // Emit the red or green gate state and exit 0 so CI can publish either
+      // result. Hard analysis errors have already failed above. A baseline, when
+      // supplied, affects the badge exactly as it affects the normal CI gate.
+      process.stdout.write(toBadge(reported));
       process.exit(0);
     } else {
       process.stdout.write(renderTerminal(reported, args.details) + '\n');

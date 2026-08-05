@@ -17,8 +17,7 @@ import { REFERENCE_CORPUS } from './corpus.js';
 
 // `legacy-grade` (not "severe"): a high score is "this reads like accumulated
 // legacy" — true whether a team wrote it over a decade or an agent produced it
-// last week. It reframes the top band as a description, not an insult, which is
-// also what makes the badge wearable.
+// last week. It reframes the top band as a description, not an insult.
 export type SlopLevel = 'clean' | 'low' | 'moderate' | 'high' | 'legacy-grade';
 
 export interface SlopScore {

@@ -1,331 +1,267 @@
-# stopslop
+# StopSlop
 
-[![slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop)
+[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop)
 
-> **0.1 preview.** The CLI and report formats are usable in CI; compatibility
-> tiers and the pre-1.0 change policy are documented in
-> [COMPATIBILITY.md](COMPATIBILITY.md). Requires Node.js 20.19+ or 22.12+.
+**Stop AI-generated code from becoming instant legacy.**
 
-**Slop is instant legacy.** A linter checks *how* code is written. **stopslop**
-checks whether the agent *overproduced junk* — over-complex functions, god
-modules/classes, and responsibilities dumped into one file. It measures how much
-uncleaned, unrefactored overproduction a repo carries — whether that took an
-agent a week or a team a decade. Zero style or type rules; it is not a competitor
-to ESLint/Biome/Oxlint.
+Coding agents are good at making code compile. They are also good at making too
+much of it: tangled functions, god files, copied blocks, dead exports, and entire
+features that pass their own tests but are never connected to the application.
+
+StopSlop catches that structural overproduction before it becomes permanent.
+It complements ESLint, Biome, and Oxlint rather than repeating their style and
+type rules.
 
 ```bash
 npx stopslop .
 ```
 
-Or install it in the project so CI uses the version pinned in your lockfile:
+It runs locally against JavaScript and TypeScript. No account. No source-code
+upload.
+
+> **0.1 preview:** Requires Node.js 20.19+ or 22.12+. Public surfaces and the
+> pre-1.0 change policy are documented in [COMPATIBILITY.md](COMPATIBILITY.md).
+
+## What it catches
+
+- **Tangled functions** using cognitive complexity from the SonarSource
+  specification.
+- **God classes and god modules** that mix unrelated responsibilities or have
+  grown into densely connected monoliths.
+- **Useful split boundaries** for god units when cohesion exposes responsibility
+  groups that should move together.
+- **Copy-pasted blocks**, with optional identifier normalization to catch copies
+  whose variables were renamed.
+- **Dead exports, dependencies, and files.**
+- **Orphan features** kept alive only by their own paired test but called by no
+  production code.
+- **Files exporting multiple classes**, a common sign that generation kept
+  appending instead of designing.
+
+Complexity and structural analysis are implemented by StopSlop. Clone detection
+uses [Clone Alert](https://www.npmjs.com/package/clone-alert); dead-code analysis
+uses [Knip](https://knip.dev). StopSlop detects code patterns, not whether a human
+or an AI wrote them.
+
+## Start with one command
+
+Run without installing:
 
 ```bash
-pnpm add --save-dev stopslop
-pnpm exec stopslop .
+npx stopslop .
 ```
 
-## What it finds
+Or pin it in the project so local runs and CI use the same version:
 
-- **Cognitive complexity** — functions that are hard to follow, scored by the
-  G. Ann Campbell / SonarSource specification.
-- **God class** — flagged on either of two axes: **dispersion** (methods split
-  into several unrelated responsibility groups — LCOM4 cohesion + hub removal,
-  with clean split boundaries) or **size/WMC** (a densely-connected monolith too
-  large to be one unit — the "everything is honestly connected but it's 2k lines"
-  class an agent produces, which cohesion can't and shouldn't split).
-- **God module** — the same, applied to a file's top-level definitions: a
-  "dump" of unrelated functions/classes/constants.
-- **Multiple exported classes** in one file.
-- **Clones** — copy-pasted blocks, *including ones whose variables were renamed*
-  (identifiers are normalized before matching). Engine:
-  [Clone Alert](https://www.npmjs.com/package/clone-alert).
-- **Dead code** — unused exports, unused dependencies, unreachable files. Engine:
-  [Knip](https://knip.dev), driven through its programmatic session API and
-  configured exclusively under `stopslop.json#knip`.
-- **Orphan features** — a function no production code calls, kept alive by
-  nothing but its own paired test. A feature that was generated together with
-  its test and never wired in: the test is green, the code does nothing. Read
-  off Knip's module graph; the finding names both halves to delete.
-
-The last two checks are other people's engines, and we say so in the output.
-Everything above them is ours.
-
-Each god finding lists the responsibility groups by member name — ready-made
-refactor boundaries.
-
-```
-  god class  Class ExpressAdapter: 41 methods across 4 unrelated responsibility groups (+27 standalone)
-      4 responsibility groups (suggested split boundaries):
-        1. close, closeOpenConnections, initHttpServer, trackOpenConnections
-        2. applyStreamHeaders, reply, setHeaderIfNotExists
-        3. set, setBaseViewsDir, setViewEngine
-        4. isMiddlewareApplied, registerParserMiddleware
+```bash
+npm install --save-dev stopslop
+npx stopslop .
 ```
 
-## Slop level
+The default report gives you the full repository score, the signal densities,
+and a grouped finding list. Add `--details` to show all clone locations and the
+suggested split boundaries for god units; use `--json` for every finding.
 
-One number, so a repo can be compared with itself over time and with other repos
-regardless of size — absolute counts just track how big the codebase is.
+```text
+  stopslop  27 files  4.3 KLOC  980ms
 
-```
-  slop level: moderate (49.4/100)
-  god units 0.00/KLOC  ·  complex fns 5.81/KLOC  ·  duplication 3.7%  ·  dead code 5.09/KLOC
-```
+  slop level: low (22.3/100)  ·  worse than 49% of reference repos
+  god units 0.00/KLOC  ·  complex fns 4.42/KLOC  ·  duplication 0.8%
+  baseline: 23 accepted · 0 new
 
-Every signal is a **density** (per KLOC; duplication is a share of lines). Each
-rises linearly from a *floor* (below it the density is the baseline of any
-living codebase — not slop) to a *budget* (the density at which the signal is as
-bad as it gets), then saturates, and is weighted:
-
-```
-score = 100 · Σ wᵢ · sat(xᵢ) / Σ wᵢ        (i = enabled signals)
-sat(x) = clamp((x − floorᵢ) / (budgetᵢ − floorᵢ), 0, 1)
+  ✓ no new slop since baseline
 ```
 
-| signal | xᵢ | weight | floor | budget |
-|---|---|---|---|---|
-| god units | (god modules + god classes) / KLOC | 0.35 | 0 | 0.1 |
-| duplication | duplicated lines / total lines | 0.25 | 0.05 | 0.30 |
-| complexity | over-complex functions / KLOC | 0.20 | 0 | 4 |
-| dead code | (unused exports + deps + files) / KLOC | 0.20 | 0 | 4 |
+Exit codes are made for CI: `0` means clear, `1` means findings, and `2` means
+the analysis itself failed.
 
-Floors and budgets are calibrated on a benchmark of **41 mature TypeScript OSS
-repos (9.4 MLOC)** — angular, react, playwright, nextjs, svelte, vue and the
-like: a floor is what ordinary repos carry (~p25), a budget is past anything in
-the reference corpus (~max/p90).
-The report also anchors the number against that corpus directly:
+## Adopt an existing codebase without cleaning it first
 
+You do not need a perfect repository to start. Record today's findings once,
+commit them, and fail only when a change adds an unaccepted finding:
+
+```bash
+# Record accepted legacy.
+npx stopslop . \
+  --baseline .stopslop-baseline.json \
+  --update-baseline
+
+git add .stopslop-baseline.json
+
+# Use the same file as the CI gate.
+npx stopslop . --baseline .stopslop-baseline.json
 ```
-  slop level: moderate (43.0/100)  ·  worse than 60% of reference repos
+
+The baseline is a sorted, reviewable list of finding identities. Updating it is
+an explicit acceptance of debt, so baseline changes should be reviewed like
+source changes.
+
+The baseline never lowers the score. These three surfaces answer different
+questions:
+
+| Surface | What it tells you |
+| --- | --- |
+| Findings | What needs attention in this run |
+| Gate | Whether any finding remains unaccepted |
+| Score | How much slop the complete repository carries, including accepted legacy |
+
+A baselined run therefore remains honest: the report can show
+`moderate (43/100)`, `30 accepted`, and `0 new` while the gate is green.
+
+## Put the gate in your README
+
+The badge is deliberately binary. It is a public CI status, not a miniature
+analytics report.
+
+```text
+AI slop | clear       0 unaccepted findings
+AI slop | detected    1 or more unaccepted findings
 ```
 
-Bands: `clean` <10 · `low` <25 · `moderate` <50 · `high` <75 · `legacy-grade` ≥75.
-A disabled check leaves the formula entirely (it is not scored as clean).
-Weights, floors, and budgets are configurable — details and rationale in
-[docs/score.md](docs/score.md). **The densities are the facts; the score is an
-aggregate.**
+Generate the [Shields endpoint JSON](https://shields.io/badges/endpoint-badge)
+with the same baseline used by CI:
 
-## Slop badge
-
-Show off a clean codebase with a [shields.io](https://shields.io/badges/endpoint-badge)
-badge. `--format shields` prints a shields **endpoint JSON** to stdout — host it
-(a committed file, a gist, anywhere reachable) and point shields at it:
-
-```sh
-stopslop . --format shields > stopslop-badge.json
+```bash
+npx stopslop . \
+  --baseline .stopslop-baseline.json \
+  --format shields > stopslop-badge.json
 ```
+
+Commit or publish `stopslop-badge.json`, then add this Markdown:
 
 ```md
-[![slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/main/stopslop-badge.json)](https://github.com/OWNER/REPO)
+[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/main/stopslop-badge.json)](https://github.com/OWNER/REPO)
 ```
 
-shields fetches the JSON and renders the badge, so it refreshes whenever you
-regenerate the file. The message is the level and score; the color comes from a
-fixed scale, tuned to reward near-zero slop:
+Without `--baseline` or `--base`, `clear` requires zero findings across the
+entire scan. With a baseline, it requires zero findings outside the committed
+baseline. The full score is still present in the terminal and JSON reports.
 
-| Result | Color | |
-| --- | --- | --- |
-| **`0 slop`** | 🟢 bright green | the flex — nothing to clean up |
-| **`clean` <10** | 🟢 bright green | clean |
-| **`low` <25** | 🟢 green | a little debt |
-| **`moderate` <50** | 🟡 yellow | has debt |
-| **`high` <75** | 🟠 orange | needs attention |
-| **`legacy-grade` ≥75** | 🔴 red | reads like accumulated legacy |
+`--format shields` exits `0` for both `clear` and `detected` so a publishing step
+can write the current state. An incomplete or failed analysis exits `2` before
+emitting a badge.
 
-`--format shields` always exits `0` (it is badge generation, not a gate), so a CI
-step can regenerate it without failing the build. A score built from a subset of
-the signals (a check was disabled or bailed out) is inflated, so its message is
-marked with a `*` — run the full set for a comparable badge. Regenerate it in CI
-to keep it fresh:
+## Gate pull requests
+
+Use a committed baseline for a stable, explicitly reviewed allowlist:
 
 ```yaml
-      - run: npx stopslop . --format shields > stopslop-badge.json
-      # then commit the file (or push it to a gist) so shields serves the latest value
+- name: Reject new AI slop
+  run: npx stopslop . --baseline .stopslop-baseline.json
 ```
 
-## Usage
-
-```
-stopslop [path]            analyze a directory or file (default: .)
-  --format <fmt>           text (default) · json · sarif · shields (badge JSON)
-  --json                   alias for --format json (stable, versioned schema)
-  --details, -d            show cluster composition, hubs, all clone sites
-  --fast                   AST checks only: skip clones and dead code
-  --config <file>          path to a stopslop.json
-  --base <ref>             gate only on findings absent from this Git revision
-  --baseline <file>        gate only on findings not in this baseline
-  --update-baseline        write current findings to --baseline and exit 0
-```
-
-Exit codes: `0` clean · `1` findings · `2` error.
-
-Invalid configuration, zero supported source files, and hard analysis errors
-exit `2` before StopSlop emits a report, badge, or baseline.
-
-### For an agent loop
+Or compare the working tree directly with the target branch and keep no baseline
+file:
 
 ```bash
-stopslop --json > slop.json   # feed to the agent: clusters are the split boundaries
+npx stopslop . --base origin/main
 ```
 
-### Git-base gate
+`--base` analyzes both revisions and reports findings that exist only in the
+current tree. CI must check out enough Git history to resolve the base revision.
+The command never switches your branch or changes the index.
 
-For pull requests, `--base <ref>` analyzes both the current working tree and the
-given Git revision, then reports only findings absent from the base:
+For GitHub Code Scanning, emit SARIF before propagating the gate failure:
 
-```sh
-stopslop . --base origin/main
-stopslop . --base origin/main --format sarif > stopslop.sarif
+```bash
+npx stopslop . --base origin/main --format sarif > stopslop.sarif
 ```
 
-The current tree is analyzed as-is, including uncommitted changes. The base is
-checked out detached into a fresh directory under the operating system's temp
-directory. StopSlop links the installed dependency context (`node_modules` and
-supported generated directories) into that checkout, analyzes the same project
-subdirectory on both sides, and removes the temporary worktree in `finally`.
-It never switches the user's branch or edits the index or working files.
+## Send the findings back to the agent
 
-This is an identity gate, not a metric diff: an existing finding with the same
-StopSlop fingerprint is accepted; a fingerprint seen only in the current tree is
-new. The full current slop score remains unchanged. `--base` is mutually
-exclusive with `--baseline` and `--update-baseline`.
+The JSON report is stable and versioned. Feed it into the next coding-agent turn
+instead of paraphrasing terminal output:
 
-`--format sarif` emits SARIF 2.1.0 for GitHub Code Scanning. It has the normal
-gate exit codes (`0` clean, `1` findings, `2` error), so upload the report before
-re-failing the job:
-
-```yaml
-name: stopslop
-on: pull_request
-
-permissions:
-  contents: read
-  security-events: write
-
-jobs:
-  stopslop:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - id: scan
-        continue-on-error: true
-        run: npx stopslop . --base "origin/${{ github.base_ref }}" --format sarif > stopslop.sarif
-      - if: always() && steps.scan.outcome != 'cancelled'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: stopslop.sarif
-          category: stopslop
-      - if: steps.scan.outcome == 'failure'
-        run: exit 1
+```bash
+npx stopslop . --json > slop-report.json
 ```
 
-## Baseline (adopting an existing project)
+God-unit findings include member groups that serve as concrete refactoring
+boundaries. Clone findings include every occurrence. Baseline and Git-base runs
+retain the complete score while returning only new findings.
 
-A mature or already-sloppy repo can light up red on day one. A **baseline** lets
-you accept today's findings as legacy and gate CI only on what is added
-afterwards — the honest answer to "this codebase is old and complex, but I don't
-want the agent making it *worse*."
+## Score: trend the repository, do not gate on the number
 
-```sh
-# 1. Record today's findings (writes the file, exits 0)
-stopslop . --baseline .stopslop-baseline.json --update-baseline
+The `0..100` slop score normalizes findings by KLOC, so a repository can be
+compared with itself over time instead of merely growing a larger raw count. It
+combines four densities: god units, duplication, over-complex functions, and
+dead code.
 
-# 2. In CI: fail only on findings not in the baseline
-stopslop . --baseline .stopslop-baseline.json
+Floors and budgets are anchored in a benchmark of 41 mature TypeScript
+repositories totaling 9.4 MLOC. The weights remain an explicit judgement call,
+not a scientific truth. That is why the binary gate uses findings rather than an
+arbitrary score cutoff.
+
+The complete formula, calibration rationale, limitations, and corpus comparison
+are in [docs/score.md](docs/score.md) and
+[docs/thresholds.md](docs/thresholds.md).
+
+## CLI
+
+```text
+stopslop [path]            analyze a directory or file (default: .)
+
+  --format <fmt>           text (default) · json · sarif · shields
+  --json                   alias for --format json
+  --details, -d            show split groups, hubs, and all clone locations
+  --fast                   skip clone and dead-code analysis
+  --config <file>          use a specific stopslop.json
+  --base <ref>             gate on findings absent from a Git revision
+  --baseline <file>        gate on findings absent from a baseline file
+  --update-baseline        replace the baseline with current findings
+  --help, -h               show help
 ```
 
-The baseline is a small, sorted JSON file you commit and review in pull requests.
-A finding's identity is `kind + file + symbol` — no line numbers, no messages — so
-a baselined god class stays accepted as it grows, and the file produces a stable,
-churn-free diff. Clones key on their content fingerprint alone, so they stay
-suppressed even when moved between files. Re-run `--update-baseline` to re-adopt
-after an intentional change.
+Invalid configuration, no supported source files, and hard analysis errors exit
+with code `2` before StopSlop emits a report, badge, or baseline.
 
-Use this committed file when you want a deliberately reviewed, stable allowlist.
-Use `--base` when the target branch itself should be the source of truth and no
-baseline artifact should be maintained. They share fingerprints but are separate
-CLI modes; one does not read or rewrite the other's state.
+## Configuration
 
-**The baseline never touches the slop score or the badge.** The score is the
-honest state of the repo ("how much uncleaned code is here"); the baseline is
-only a CI gate ("don't add more"). A gated run reports the new findings and its
-score line reads e.g. `moderate (43.0/100)` with `baseline: 30 accepted · 1 new`
-below it — the number stays truthful while CI fails only on the one new finding.
-
-## Config (`stopslop.json`)
-
-Every metric is configurable — thresholds, and each check can be turned off with
-`false`. All fields are optional and merged over the defaults.
+StopSlop works without configuration. To tune a check, add `stopslop.json`:
 
 ```json
 {
   "$schema": "https://unpkg.com/stopslop/schema.json",
-  "cognitiveComplexity": 15,
-  "godModule": { "minMembers": 15, "minClusters": 3, "minComplexity": 150, "sizeMembers": 37, "sizeComplexity": 350 },
-  "godClass": { "minMembers": 12, "minClusters": 3, "minComplexity": 90, "sizeMembers": 30, "sizeComplexity": 200 },
-  "multipleExportedClasses": { "maxPerFile": 1 },
-  "duplicates": { "minTokens": 50, "minLines": 5, "ignoreIdentifiers": true, "ignoreLiterals": false },
-  "deadCode": { "exports": true, "dependencies": true, "files": true, "production": false },
-  "knip": {
-    "workspaces": {
-      ".": { "entry": ["src/index.ts"] },
-      "packages/*": { "entry": ["src/index.ts"], "project": ["src/**/*.ts"] }
-    }
+  "cognitiveComplexity": 20,
+  "duplicates": {
+    "minTokens": 100,
+    "minLines": 10,
+    "ignoreIdentifiers": true
   },
-  "score": { "weights": { "god": 0.35 }, "budgets": { "duplication": 0.3 }, "floors": { "duplication": 0.05 } },
-  "hubFanInRatio": 0.5,
   "ignore": ["**/*.generated.ts"]
 }
 ```
 
-| key | what it tunes |
-|---|---|
-| `cognitiveComplexity` | report functions above this score (or `false` to disable) |
-| `godClass` / `godModule` | `min*` = dispersion axis (unrelated groups); `size*` = size/WMC axis (a monolith too big even if fully connected); or `false` |
-| `multipleExportedClasses` | `maxPerFile` classes per file before flagging; or `false` |
-| `duplicates` | clone size floors and token normalization; or `false` |
-| `deadCode` | which Knip issue classes to report; or `false` |
-| `knip` | complete JSON-compatible Knip config, including `workspaces` |
-| `score` | slop-level weights, floors, and budgets |
-| `hubFanInRatio` | fan-in fraction that marks a shared "hub" member for removal |
-| `ignore` | extra exclude globs on top of the built-ins |
+Every field is optional. Set a check to `false` to disable it. The published
+schema provides editor completion and rejects unknown or invalid properties.
 
-Set a check to `false` to disable it, e.g. `"godModule": false`.
+See [docs/configuration.md](docs/configuration.md) for every field, default, and
+Knip workspace example. See [stopslop.example.json](stopslop.example.json) for a
+complete configuration.
 
-`stopslop.json` is the only Knip configuration source. StopSlop does not load or
-execute `knip.json`, `.knip.json`, or `knip.config.*`; `package.json#knip` is
-discarded and never merged with `knip`. The published `schema.json` provides editor
-completion and validation for both StopSlop fields and the installed Knip
-configuration surface. StopSlop deliberately has no config generator or init
-wizard; project-aware generation belongs to separate tooling.
+## Design and limitations
 
-For a single-package project, put `entry` and `project` directly under `knip`.
-For a monorepo, put them under `knip.workspaces`: Knip intentionally ignores
-top-level `entry` and `project` when multiple workspaces are present.
+- StopSlop supports `.js`, `.jsx`, `.mjs`, `.cjs`, `.ts`, and `.tsx` source.
+- Tests, generated code, build output, dependencies, and common framework output
+  directories are excluded by default.
+- A high score does not prove poor engineering, and a low score does not prove
+  correctness. StopSlop measures structural overproduction, not total quality.
+- Dead-code accuracy depends on Knip knowing the project's entry points.
+- A baseline accepts finding identities. If an accepted function becomes more
+  complex without changing identity, the score rises but the gate stays clear.
 
-**Full reference with every field, defaults, and examples:
-[docs/configuration.md](docs/configuration.md).** Defaults are calibrated on a
-22-repo TypeScript corpus ([docs/thresholds.md](docs/thresholds.md)).
-
-## How it works & why the numbers
-
-Architecture, literature references, and which parts are our heuristics:
-[ARCH.md](ARCH.md). Implementation plan: [PLAN.md](PLAN.md).
-
-Under the hood: **complexity and god module/class are ours**; clones are
-[Clone Alert](https://www.npmjs.com/package/clone-alert) and dead code is
-[Knip](https://knip.dev).
+Architecture, research references, and the boundary between published methods
+and StopSlop heuristics are documented in [ARCH.md](ARCH.md).
 
 ## Development
 
 ```bash
 pnpm install
 pnpm test
+pnpm typecheck
 pnpm build
-pnpm test:package       # install and execute the packed npm artifact
-pnpm release:check      # complete pre-publish gate
-pnpm schema:generate      # refresh schema.json after a Knip/config change
-pnpm calibrate            # regenerate docs/thresholds.md from a corpus
+pnpm test:package
+pnpm release:check
 ```
+
+MIT licensed. See [LICENSE](LICENSE).

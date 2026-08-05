@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "findings": [
+    {
+      "kind": "cognitive-complexity",
+      "file": "scripts/calibrate.ts",
+      "symbol": "main"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/cognitive-complexity.ts",
+      "symbol": "collectFunctions"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/cognitive-complexity.ts",
+      "symbol": "computeCognitiveComplexity"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/cohesion.ts",
+      "symbol": "components"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/dead-code.ts",
+      "symbol": "mapIssues"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/detectors.ts",
+      "symbol": "countExportedClasses"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/duplicates.ts",
+      "symbol": "duplicatesAnalyzer"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/members.ts",
+      "symbol": "collectThisFields"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/members.ts",
+      "symbol": "extractModule"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/members.ts",
+      "symbol": "extractOneClass"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/members.ts",
+      "symbol": "patternNames"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/members.ts",
+      "symbol": "resolveModuleRefs"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/orphan-features.ts",
+      "symbol": "callableDeclarations"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/analyzers/orphan-features.ts",
+      "symbol": "findOrphanFeatures"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/cli.ts",
+      "symbol": "parseArgs"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/discover.ts",
+      "symbol": "discover"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/index.ts",
+      "symbol": "analyze"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/report/terminal.ts",
+      "symbol": "renderFinding"
+    },
+    {
+      "kind": "cognitive-complexity",
+      "file": "src/walk.ts",
+      "symbol": "walk"
+    },
+    {
+      "kind": "duplicate-code",
+      "file": "src/analyzers/cognitive-complexity.ts",
+      "symbol": "clone:14a6d5b170"
+    },
+    {
+      "kind": "duplicate-code",
+      "file": "src/analyzers/members.ts",
+      "symbol": "clone:a4488ffd2c"
+    },
+    {
+      "kind": "unused-export",
+      "file": "src/analyzers/cohesion.ts",
+      "symbol": "annotateCohesion"
+    },
+    {
+      "kind": "unused-export",
+      "file": "src/walk.ts",
+      "symbol": "collect"
+    }
+  ]
+}

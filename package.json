@@ -1,6 +1,6 @@
 {
   "name": "stopslop",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Detects AI-agent slop that linters miss: over-complex functions, god modules/classes, dumped responsibilities.",
   "type": "module",
   "license": "MIT",

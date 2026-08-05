@@ -4,6 +4,18 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/BaryshevRS/stopslop/compare/v0.1.2...v0.2.0) (2026-08-05)
+
+
+### Features
+
+* make AI slop badge a baseline gate ([e1e599f](https://github.com/BaryshevRS/stopslop/commit/e1e599fd61c3897e798a534ea0866370f690557c))
+
+
+### Bug Fixes
+
+* **ci:** keep npm pack JSON clean ([c512786](https://github.com/BaryshevRS/stopslop/commit/c5127861c3f56ac014607e1c908aa3cbff34810a))
+
 ## [0.1.2] - 2026-08-02
 
 ### Fixed

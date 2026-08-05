@@ -8,6 +8,43 @@ permissions:
   contents: read
 
 jobs:
+  commitlint:
+    name: Conventional commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.1.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Lint pull request title
+        if: github.event_name == 'pull_request'
+        env:
+          COMMIT_MESSAGE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$COMMIT_MESSAGE" | pnpm exec commitlint --verbose
+      - name: Lint pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+      - name: Lint pushed commits
+        if: github.event_name == 'push'
+        env:
+          BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            pnpm exec commitlint --last --verbose
+          else
+            pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+          fi
+
   check:
     name: ${{ matrix.os }} / Node ${{ matrix.node }}
     runs-on: ${{ matrix.os }}
@@ -26,7 +63,7 @@ jobs:
           - os: windows-latest
             node: 22
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
@@ -41,7 +78,7 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 24

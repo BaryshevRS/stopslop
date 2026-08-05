@@ -4,14 +4,6 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-- The Shields badge is now a binary AI-slop gate (`clear` or `detected`) instead
-  of a score band. When a baseline is supplied, the badge reflects only
-  unaccepted findings while the full score remains visible in normal reports.
-
 ## [0.1.2] - 2026-08-02
 
 ### Fixed

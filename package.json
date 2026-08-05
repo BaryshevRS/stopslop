@@ -49,7 +49,7 @@
     "schema:generate": "tsx scripts/generate-config-schema.ts",
     "schema:check": "tsx scripts/generate-config-schema.ts --check",
     "commitlint": "commitlint",
-    "prepare": "simple-git-hooks"
+    "prepare": "node scripts/install-git-hooks.mjs"
   },
   "simple-git-hooks": {
     "commit-msg": "pnpm exec commitlint --edit \"$1\""

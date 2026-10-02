@@ -29,6 +29,7 @@
   "files": [
     "dist/**/*",
     "docs/**/*.md",
+    "hooks/stop-gate.mjs",
     "README.md",
     "COMPATIBILITY.md",
     "LICENSE",

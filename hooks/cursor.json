@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [{ "command": "node ./hooks/stop-gate.mjs --agent cursor" }]
+  }
+}

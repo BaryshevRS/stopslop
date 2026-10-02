@@ -1,0 +1,15 @@
+{
+  "name": "stopslop",
+  "description": "StopSlop for Claude Code",
+  "owner": {
+    "name": "Ruslan Baryshev",
+    "url": "https://github.com/BaryshevRS"
+  },
+  "plugins": [
+    {
+      "name": "stopslop",
+      "source": "./",
+      "description": "A skill for finding and fixing structural AI slop, and a Stop hook that hands Claude the slop its changes added before it ends a turn."
+    }
+  ]
+}

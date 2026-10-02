@@ -1,6 +1,9 @@
 {
   "versionFiles": [
-    { "path": "package.json", "kind": "json", "pointer": "/version" }
+    { "path": "package.json", "kind": "json", "pointer": "/version" },
+    { "path": ".claude-plugin/plugin.json", "kind": "json", "pointer": "/version" },
+    { "path": ".cursor-plugin/plugin.json", "kind": "json", "pointer": "/version" },
+    { "path": "gemini-extension.json", "kind": "json", "pointer": "/version" }
   ],
   "lockfiles": ["pnpm-lock.yaml"],
   "gate": "pnpm release:check",
@@ -16,7 +19,8 @@
     { "id": "json", "name": "Versioned JSON report", "tier": "stable", "mode": "schemaVersion" },
     { "id": "sarif", "name": "SARIF 2.1.0 report", "tier": "stable", "mode": "forward-compatible" },
     { "id": "config", "name": "stopslop.json schema", "tier": "stable", "mode": "backward-compatible" },
-    { "id": "node-api", "name": "Programmatic Node.js API", "tier": "experimental", "mode": "unversioned" }
+    { "id": "node-api", "name": "Programmatic Node.js API", "tier": "experimental", "mode": "unversioned" },
+    { "id": "agent-plugins", "name": "Agent plugins (skill and stop hook)", "tier": "experimental", "mode": "unversioned" }
   ],
   "releaseBranch": "main",
   "tag": { "prefix": "v", "push": true }

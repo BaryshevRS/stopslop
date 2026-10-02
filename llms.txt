@@ -6,11 +6,14 @@ Run without installing: `npx stopslop .`. Exit codes are `0` for a clear gate, `
 
 Dead-code settings live under `knip` in `stopslop.json` — a project's own `knip.json` or `package.json#knip` is never read. Nothing needs to be written up front: the run prints `config hints` from Knip naming the workspace or entry point that is missing, and dead code stays out of the score until they are resolved.
 
+Coding agents: this repository is a plugin for Claude Code (`/plugin marketplace add BaryshevRS/stopslop`), Codex (`codex plugin marketplace add BaryshevRS/stopslop`), and Cursor, and an extension for Gemini CLI. It adds the `stopslop` skill and a stop hook that hands the agent what its uncommitted changes added before it ends a turn. Other agents get the skill with `npx skills add BaryshevRS/stopslop`.
+
 ## Start here
 
 - [Overview, installation, CLI and badge](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/README.md)
 - [Configuration reference](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/configuration.md)
 - [CI baselines, Git comparison, SARIF and agent reports](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/ci-and-automation.md)
+- [What each finding means and how to fix it](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/rules.md)
 - [Typed Node.js API](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/node-api.md)
 
 ## How it works

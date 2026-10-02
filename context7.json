@@ -17,6 +17,8 @@
     "Use `--fast` only when intentionally skipping duplicate-code and dead-code analysis; it runs the AST checks for cognitive complexity and god units.",
     "The Node API is ESM and typed: call `resolveConfig()` before `analyze()`, or call `loadConfig()` to read stopslop.json. The slop score always describes the complete analyzed repository.",
     "Clone detection is powered by Clone Alert and dead-code analysis by Knip. Configure Knip only under the `knip` property in stopslop.json.",
-    "Knip settings go under `knip` in stopslop.json; a project's own knip.json or package.json#knip is never read. Do not write one up front — run the analysis and follow the `config hints` it prints, which come from Knip and name what is missing."
+    "Knip settings go under `knip` in stopslop.json; a project's own knip.json or package.json#knip is never read. Do not write one up front — run the analysis and follow the `config hints` it prints, which come from Knip and name what is missing.",
+    "Every reported kind has help: the JSON report's `rules` block and SARIF rule help give `why` and `fix`, the same text as docs/rules.md. Fix the code; do not raise thresholds or edit the baseline to get a clear run.",
+    "The repo is a plugin for Claude Code, Codex and Cursor and a Gemini CLI extension: a stopslop skill plus a stop hook reporting findings the uncommitted changes added. Other agents: `npx skills add BaryshevRS/stopslop`."
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "description": "Before the agent ends a turn, hand it the slop its uncommitted changes added",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.mjs\"",
+            "timeout": 300,
+            "statusMessage": "StopSlop: checking the changes for new slop"
+          }
+        ]
+      }
+    ]
+  }
+}

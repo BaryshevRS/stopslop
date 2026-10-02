@@ -142,6 +142,8 @@ function verifyPacklist(paths) {
     'docs/node-api.md',
     'docs/score.md',
     'docs/thresholds.md',
+    'docs/rules.md',
+    'hooks/stop-gate.mjs',
     'dist/cli.js',
     'dist/index.js',
     'dist/index.d.ts',

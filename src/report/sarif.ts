@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { fingerprint } from '../baseline.js';
 import type { AnalyzeResult } from '../index.js';
-import type { Finding } from '../types.js';
+import type { Finding, FindingKind } from '../types.js';
+import { ruleHelp, ruleMarkdown } from './rules.js';
 
 /** GitHub Code Scanning-compatible SARIF 2.1.0 report. */
 export function toSarif(result: AnalyzeResult): string {
@@ -12,9 +13,19 @@ export function toSarif(result: AnalyzeResult): string {
   for (const finding of result.findings) {
     if (seenRules.has(finding.kind)) continue;
     seenRules.add(finding.kind);
+    // Code Scanning shows fullDescription at the top of an alert and help next
+    // to it: why the rule exists and what resolves it, not only what failed.
+    const rule = ruleHelp(finding.kind);
     rules.push({
       id: finding.kind,
-      shortDescription: { text: describeKind(finding.kind) },
+      name: ruleName(finding.kind),
+      shortDescription: { text: rule.summary },
+      fullDescription: { text: rule.why },
+      help: {
+        text: `${rule.why}\n\n${rule.fix}\n\nTune or disable: ${rule.config} in stopslop.json.`,
+        markdown: ruleMarkdown(rule),
+      },
+      helpUri: rule.helpUri,
       defaultConfiguration: { level: sarifLevel(finding.severity) },
     });
   }
@@ -45,9 +56,12 @@ function sarifLevel(severity: Finding['severity']): 'note' | 'warning' {
   return severity === 'warn' ? 'warning' : 'note';
 }
 
-function describeKind(kind: Finding['kind']): string {
-  const description = kind.replaceAll('-', ' ');
-  return `${description.charAt(0).toUpperCase()}${description.slice(1)}`;
+/** SARIF rule name, the identifier Code Scanning filters by: `god-class` → `GodClass`. */
+function ruleName(kind: FindingKind): string {
+  return kind
+    .split('-')
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join('');
 }
 
 function locationsFor(root: string, finding: Finding): object[] {

@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { emitGenerated } from './emit-generated.js';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type Schema = { [key: string]: Json };
@@ -134,17 +135,4 @@ const schema: Schema = {
   definitions: { knip: knipSchema },
 };
 
-const generated = `${JSON.stringify(schema, null, 2)}\n`;
-if (process.argv.includes('--check')) {
-  let current = '';
-  try {
-    current = readFileSync(outputPath, 'utf8');
-  } catch {
-    // The error below explains how to create the missing artifact.
-  }
-  if (current.replaceAll('\r\n', '\n') !== generated) {
-    throw new Error('schema.json is stale; run `pnpm schema:generate` and commit the result');
-  }
-} else {
-  writeFileSync(outputPath, generated);
-}
+emitGenerated(outputPath, `${JSON.stringify(schema, null, 2)}\n`, 'schema.json', 'pnpm schema:generate');

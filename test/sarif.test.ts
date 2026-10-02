@@ -49,6 +49,20 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
     'duplicate-code',
     'unused-file',
   ]);
+  const cloneRule = sarif.runs[0].tool.driver.rules[0];
+  expect(cloneRule).toMatchObject({
+    name: 'DuplicateCode',
+    shortDescription: { text: expect.any(String) },
+    fullDescription: { text: expect.stringContaining('Copies drift') },
+    help: {
+      text: expect.stringContaining('Extract the block into one function'),
+      markdown: expect.stringContaining('**How to fix.**'),
+    },
+    helpUri: 'https://github.com/BaryshevRS/stopslop/blob/main/docs/rules.md#duplicate-code',
+    defaultConfiguration: { level: 'warning' },
+  });
+  // Code Scanning truncates a longer full description.
+  expect(cloneRule.fullDescription.text.length).toBeLessThanOrEqual(1024);
 
   const cloneResult = sarif.runs[0].results.find(
     (entry: { ruleId: string }) => entry.ruleId === 'duplicate-code',

@@ -44,7 +44,7 @@
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm schema:check",
+    "prebuild": "pnpm schema:check && pnpm rules:check",
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest run",
@@ -59,6 +59,8 @@
     "typecheck": "tsc --noEmit",
     "schema:generate": "tsx scripts/generate-config-schema.ts",
     "schema:check": "tsx scripts/generate-config-schema.ts --check",
+    "rules:generate": "tsx scripts/generate-rules-doc.ts",
+    "rules:check": "tsx scripts/generate-rules-doc.ts --check",
     "commitlint": "commitlint",
     "prepare": "simple-git-hooks 1>&2"
   },

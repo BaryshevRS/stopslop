@@ -38,10 +38,10 @@ The publish job checks that the tag exactly matches `package.json`, runs tests,
 type-checking, the production build, the production dependency audit, and the
 packed-package smoke test before npm receives anything.
 
-Public surfaces and maturity tiers remain declared in `COMPATIBILITY.md` and
-`release.config.json`. Breaking changes to preview surfaces require at least a
-minor release while the project is pre-1.0 and must be called out in the release
-PR.
+Public surfaces and maturity tiers are declared in `COMPATIBILITY.md` and
+`release.config.json`. Breaking changes to stable surfaces require a major
+release; changes to experimental surfaces may ship in a minor release and must
+be called out in the release PR.
 
 ## npm trusted publishing
 

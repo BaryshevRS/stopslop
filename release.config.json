@@ -12,10 +12,10 @@
   },
   "compatibility": { "path": "COMPATIBILITY.md" },
   "surfaces": [
-    { "id": "cli", "name": "CLI flags and exit codes", "tier": "preview", "mode": "semver" },
-    { "id": "json", "name": "Versioned JSON report", "tier": "preview", "mode": "schemaVersion" },
-    { "id": "sarif", "name": "SARIF 2.1.0 report", "tier": "preview", "mode": "forward-compatible" },
-    { "id": "config", "name": "stopslop.json schema", "tier": "preview", "mode": "backward-compatible" },
+    { "id": "cli", "name": "CLI flags and exit codes", "tier": "stable", "mode": "semver" },
+    { "id": "json", "name": "Versioned JSON report", "tier": "stable", "mode": "schemaVersion" },
+    { "id": "sarif", "name": "SARIF 2.1.0 report", "tier": "stable", "mode": "forward-compatible" },
+    { "id": "config", "name": "stopslop.json schema", "tier": "stable", "mode": "backward-compatible" },
     { "id": "node-api", "name": "Programmatic Node.js API", "tier": "experimental", "mode": "unversioned" }
   ],
   "releaseBranch": "main",

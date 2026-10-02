@@ -111,5 +111,5 @@ const result = await analyze(
 ```
 
 Custom analyzers currently return the published `Finding` union, so use an
-existing finding kind for integrations. Treat that surface as pre-1.0; see the
-[compatibility policy](../COMPATIBILITY.md).
+existing finding kind for integrations. That surface is experimental and may
+change in a minor release; see the [compatibility policy](../COMPATIBILITY.md).

@@ -1,18 +1,23 @@
 # Compatibility
 
-Last updated: 0.2.0 (2026-08-05)
+Last updated: 1.1.0
 
-StopSlop is pre-1.0. Public surfaces are usable, but none are declared stable
-yet. Breaking preview changes require a minor release and are called out in the
-changelog. Experimental surfaces may change in any release.
+StopSlop follows Semantic Versioning. Stable surfaces change incompatibly only
+in a major release. Experimental surfaces may change in a minor release; such
+changes are called out in the changelog.
 
 | Surface | Tier | Compatibility policy |
 | --- | --- | --- |
-| CLI flags and exit codes | Preview | Existing flags and exit meanings are preserved within a minor line. |
-| Versioned JSON report | Preview | Breaking payload changes increment `schemaVersion`. |
-| SARIF 2.1.0 report | Preview | New rules and optional properties may be added; existing required fields remain compatible. |
-| `stopslop.json` schema | Preview | Existing valid configuration remains valid within a minor line. |
-| Programmatic Node.js API | Experimental | Exported functions and TypeScript types may change before 1.0. |
+| CLI flags and exit codes | Stable | New flags may be added; existing flags and exit code meanings change only in a major release. |
+| Versioned JSON report | Stable | Fields may be added within a `schemaVersion`; removing or changing one increments it and requires a major release. |
+| SARIF 2.1.0 report | Stable | New rules and optional properties may be added; existing required fields remain compatible. |
+| `stopslop.json` schema | Stable | New settings may be added; configuration valid in a 1.x release stays valid in every later 1.x release. |
+| Programmatic Node.js API | Experimental | Exported functions and TypeScript types may change in a minor release. |
+
+Findings and scores are not a compatibility surface. Detector fixes, threshold
+calibration, and Knip or Clone Alert updates can change what a release reports
+for the same code; such changes are called out in the changelog. Pin the
+StopSlop version in CI when a gate must not move without a commit.
 
 ## Runtime support
 

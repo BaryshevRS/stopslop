@@ -293,7 +293,8 @@ console.log(result.slop.score, result.findings);
 The API also exports the resolved defaults, scoring helpers, baseline helpers,
 and report types. See the [Node.js API guide](docs/node-api.md) for Git-base
 analysis, typed configuration, result semantics, and custom analyzers. The API
-is experimental before 1.0; see [COMPATIBILITY.md](COMPATIBILITY.md).
+is experimental and may change in a minor release; see
+[COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## Design and limitations
 

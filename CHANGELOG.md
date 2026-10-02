@@ -4,6 +4,13 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/BaryshevRS/stopslop/compare/v1.0.0...v1.1.0) (2026-10-02)
+
+
+### Features
+
+* **dead-code:** report Knip configuration hints ([4e06762](https://github.com/BaryshevRS/stopslop/commit/4e06762878a6380234bc98f439fb6a26f85e0ad6))
+
 ## [1.0.0](https://github.com/BaryshevRS/stopslop/compare/v0.2.0...v1.0.0) (2026-08-05)
 
 

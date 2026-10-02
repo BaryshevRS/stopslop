@@ -5,6 +5,7 @@ const packageManifest = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ) as {
   name?: string;
+  version?: string;
   description?: string;
   keywords?: string[];
   main?: string;
@@ -26,6 +27,9 @@ const context7 = JSON.parse(
 };
 
 const llmsIndex = readFileSync(new URL('../llms.txt', import.meta.url), 'utf8');
+
+/** Every agent's manifest for the same plugin: Claude Code (also read by Codex), Cursor, Gemini CLI. */
+const agentManifests = ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', 'gemini-extension.json'];
 
 describe('published package manifest', () => {
   it('pins Knip to exactly version 6.39.0', () => {
@@ -67,5 +71,16 @@ describe('published package manifest', () => {
     expect(context7.rules?.every((rule) => rule.length <= 255)).toBe(true);
     expect(llmsIndex).toContain('/docs/ci-and-automation.md');
     expect(llmsIndex).toContain('/docs/node-api.md');
+    expect(llmsIndex).toContain('/docs/rules.md');
+  });
+
+  it.each(agentManifests)('releases %s with the package', (path) => {
+    // A plugin version pins users until it changes; Release Please bumps them all.
+    const manifest = JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')) as {
+      name?: string;
+      version?: string;
+    };
+    expect(manifest.name).toBe(packageManifest.name);
+    expect(manifest.version).toBe(packageManifest.version);
   });
 });

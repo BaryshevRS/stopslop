@@ -1,0 +1,15 @@
+{
+  "name": "stopslop",
+  "displayName": "StopSlop",
+  "version": "1.1.0",
+  "description": "Catch structural AI slop in JavaScript and TypeScript while the agent is still working: over-complex functions, god classes and modules, copy-pasted blocks, dead code, and features only their own test uses.",
+  "author": {
+    "name": "Ruslan Baryshev"
+  },
+  "homepage": "https://github.com/BaryshevRS/stopslop#readme",
+  "repository": "https://github.com/BaryshevRS/stopslop",
+  "license": "MIT",
+  "keywords": ["ai-slop", "code-quality", "static-analysis", "typescript", "javascript"],
+  "skills": "./skills/",
+  "hooks": "./hooks/cursor.json"
+}

@@ -177,18 +177,54 @@ For GitHub Code Scanning, emit SARIF before propagating the gate failure:
 npx stopslop . --base origin/main --format sarif > stopslop.sarif
 ```
 
+Every rule in the SARIF report carries its help, so the alert says why the
+finding matters and how to fix it, not only what failed.
+
 See [CI and automation](docs/ci-and-automation.md) for a complete workflow that
 uploads SARIF and still preserves StopSlop's exit code.
 
-## Send the findings back to the agent
+## Catch slop while the agent is still working
 
-The JSON report is stable and versioned. Feed it into the next coding-agent turn
-instead of paraphrasing terminal output:
+A check that first runs on the pull request reports code nobody remembers
+writing. StopSlop can run inside the coding session instead, while the code is
+still in front of the agent.
+
+This repository is a plugin for Claude Code, Codex, and Cursor and an extension
+for Gemini CLI. Each agent gets the `stopslop` skill, which covers how to run the
+check, read the report, and fix each kind of finding without gaming it: no
+raised thresholds, no ignore globs, no baseline edits on the agent's own
+initiative. Where the agent supports it, the install also adds a stop hook.
+
+| Agent | Install | Stop hook |
+| --- | --- | --- |
+| Claude Code | `/plugin marketplace add BaryshevRS/stopslop`<br>`/plugin install stopslop@stopslop` | included |
+| Codex | `codex plugin marketplace add BaryshevRS/stopslop`<br>`codex plugin add stopslop@stopslop` | included; trust it when Codex asks at session start |
+| Cursor | Customize → import `BaryshevRS/stopslop` from a GitHub repository | included |
+| Gemini CLI | `gemini extensions install https://github.com/BaryshevRS/stopslop` | [in project settings](docs/ci-and-automation.md#commit-the-hook-to-the-project) |
+| Others | `npx skills add BaryshevRS/stopslop` (skill only) | — |
+
+Before the agent ends a turn that changed JS/TS source, the hook checks the
+uncommitted changes against `HEAD`, or against `.stopslop-baseline.json` when
+the project has one, and hands any new findings back with how to fix each kind.
+Legacy never blocks a turn, a turn that changed no source costs one
+`git status`, and the agent gets one nudge per turn: accepting a finding stays
+your decision. The hook runs the project's pinned `stopslop` from `node_modules`
+and falls back to `npx stopslop@1`.
+
+The hook also ships in the npm package, so a project that pins `stopslop` can
+commit it to its own agent settings and give it to every contributor; see
+[Commit the hook to the project](docs/ci-and-automation.md#commit-the-hook-to-the-project).
+
+**Any agent or script.** The JSON report is stable and versioned. Feed it into
+the next turn instead of paraphrasing terminal output:
 
 ```bash
-npx stopslop . --json > slop-report.json
+npx stopslop . --base HEAD --json > slop-report.json
 ```
 
+Each finding carries `kind`, `file`, `line`, and `message`, and `rules` says for
+each reported kind why it matters and what resolves it: the same text as
+[docs/rules.md](docs/rules.md) and the rule help in GitHub Code Scanning.
 God-unit findings include member groups that serve as concrete refactoring
 boundaries. Clone findings include every occurrence. Baseline and Git-base runs
 retain the complete score while returning only new findings.

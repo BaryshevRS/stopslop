@@ -13,6 +13,7 @@ changes are called out in the changelog.
 | SARIF 2.1.0 report | Stable | New rules and optional properties may be added; existing required fields remain compatible. |
 | `stopslop.json` schema | Stable | New settings may be added; configuration valid in a 1.x release stays valid in every later 1.x release. |
 | Programmatic Node.js API | Experimental | Exported functions and TypeScript types may change in a minor release. |
+| Agent plugins (`stopslop` skill and stop hook for Claude Code, Codex, Cursor, Gemini CLI) | Experimental | When the hook runs, what it reports, and the skill's instructions may change in a minor release. |
 
 Findings and scores are not a compatibility surface. Detector fixes, threshold
 calibration, and Knip or Clone Alert updates can change what a release reports

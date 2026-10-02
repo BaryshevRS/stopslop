@@ -1,0 +1,13 @@
+{
+  "name": "stopslop",
+  "owner": {
+    "name": "Ruslan Baryshev"
+  },
+  "plugins": [
+    {
+      "name": "stopslop",
+      "source": "./",
+      "description": "A skill for finding and fixing structural AI slop, and a stop hook that hands the agent the slop its changes added before it ends a turn."
+    }
+  ]
+}

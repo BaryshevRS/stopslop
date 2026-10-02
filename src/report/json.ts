@@ -2,11 +2,13 @@ import { relative, sep } from 'node:path';
 import { configFilePath } from '../config.js';
 import type { AnalyzeResult } from '../index.js';
 import type { FindingKind } from '../types.js';
+import { rulesFor } from './rules.js';
 
 /**
  * 6: optional `gitBase` records the Git ref, resolved commit, and suppression counts.
  *    Added within 6, nothing removed: `configHints` (what Knip reports missing
- *    from the configuration) and `configFile` (where those settings are read).
+ *    from the configuration), `configFile` (where those settings are read), and
+ *    `rules` (why each reported kind matters and what resolves it).
  * 5: `thresholds.knip` records the embedded Knip configuration that ran.
  * 4: `slop.percentile` — share of the 41-repo reference corpus (src/corpus.ts)
  *    with a strictly lower core-signal score; `score.floors` in thresholds. Budgets
@@ -64,6 +66,9 @@ export function toJson(result: AnalyzeResult): string {
       },
       summary: summarize(result),
       findings: result.findings,
+      // Keyed by finding kind, only the kinds reported: what an agent needs to
+      // fix a finding without guessing what the rule wants.
+      rules: rulesFor(result.findings),
       notes: result.notes,
       configHints: result.configHints,
       /** Where Knip settings are read from. Nowhere else is consulted. */

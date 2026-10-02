@@ -1,0 +1,6 @@
+{
+  "$schema": "./schema.json",
+  "knip": {
+    "entry": ["hooks/stop-gate.mjs"]
+  }
+}

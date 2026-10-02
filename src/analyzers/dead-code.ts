@@ -10,7 +10,7 @@ import { findOrphanFeatures } from './orphan-features.js';
 // (`knip/session`) — no CLI spawn, no output parsing. stopslop.json#knip is the
 // sole Knip configuration source; project Knip configs are never discovered.
 //
-// Conservative by design (ARCH.md): unused exports and unused dependencies are
+// Conservative by design: unused exports and unused dependencies are
 // reported as warnings; unused *files* depend on entry-point detection, which
 // misfires on projects with unconventional entries, so they are info-level and
 // carry that caveat in the message.

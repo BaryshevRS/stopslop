@@ -344,8 +344,9 @@ is experimental and may change in a minor release; see
 - A baseline accepts finding identities. If an accepted function becomes more
   complex without changing identity, the score rises but the gate stays clear.
 
-Architecture, research references, and the boundary between published methods
-and StopSlop heuristics are documented in [ARCH.md](ARCH.md).
+The score formula and its limits are in [docs/score.md](docs/score.md), how
+the default thresholds were calibrated in [docs/thresholds.md](docs/thresholds.md),
+and what each finding means in [docs/rules.md](docs/rules.md).
 
 ## FAQ
 

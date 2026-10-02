@@ -3,7 +3,7 @@ import type { OxcNode } from './types.js';
 /**
  * TypeScript type-only subtrees. We never descend into these: a shared
  * `Config` type annotation must not create cohesion edges, and type nodes
- * carry no runtime complexity. See ARCH.md ("поддеревья типов пропускаются").
+ * carry no runtime complexity.
  */
 export const TYPE_NODE_PREFIX = 'TS';
 

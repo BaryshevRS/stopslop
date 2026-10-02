@@ -1,7 +1,7 @@
 import type { CohesionUnit, Member } from '../types.js';
 
-// LCOM4 cohesion graph (Hitz & Montazeri 1995) + hub exclusion (our heuristic,
-// see ARCH.md). Nodes are function-members; state members are shared connectors;
+// LCOM4 cohesion graph (Hitz & Montazeri 1995) + hub exclusion (our heuristic).
+// Nodes are function-members; state members are shared connectors;
 // dependency members never connect. A high-fan-in "hub" (glue) is removed and
 // components recomputed, so a pseudo-connected monster splits into its real
 // responsibility groups.

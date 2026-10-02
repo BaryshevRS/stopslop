@@ -6,7 +6,7 @@ import { computeCohesion } from './cohesion.js';
 // God Module / God Class detectors. Same cohesion engine, different extraction.
 // Gate = "enough members AND several independent clusters AND high total
 // complexity". We take the IDEA of a combined detection strategy from Marinescu
-// (ICSM 2004); the calibrated constants are ours. See ARCH.md.
+// (ICSM 2004); the calibrated constants are ours.
 
 const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n);
 
@@ -21,7 +21,7 @@ function totalComplexity(unit: CohesionUnit): number {
  * Split clusters into substantive responsibility groups (≥2 members — real
  * refactor boundaries) and loose standalone methods. A facade/adapter has a few
  * groups plus many delegating singletons; without this split, LCOM4 reports
- * "split into 31 groups" (26 of them singletons), which is noise. See ARCH.md.
+ * "split into 31 groups" (26 of them singletons), which is noise.
  */
 function splitClusters(unit: CohesionUnit): { groups: string[][]; standalone: string[] } {
   const groups: string[][] = [];
@@ -41,7 +41,7 @@ type GodAxis = 'dispersion' | 'size' | null;
  *  - size (WMC): a monolith too large to be one unit, even if fully connected —
  *    the case an agent produces when "everything is honestly connected" but the
  *    class is 2k lines. Cohesion can't (and shouldn't) split a genuinely
- *    connected class, so bulk is a separate axis. See ARCH.md.
+ *    connected class, so bulk is a separate axis.
  * Returns which axis fired (dispersion wins if both).
  */
 function godAxis(unit: CohesionUnit, gate: GodGate): GodAxis {

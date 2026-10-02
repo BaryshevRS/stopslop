@@ -1,7 +1,6 @@
 import type { KnipConfiguration } from 'knip';
 
-// Core data model shared across the pipeline. See ARCH.md for the rationale
-// behind Member.kind and the cohesion model.
+// Core data model shared across the pipeline.
 
 export type FindingKind =
   | 'cognitive-complexity'

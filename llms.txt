@@ -20,7 +20,6 @@ Coding agents: this repository is a plugin for Claude Code (`/plugin marketplace
 
 - [Score formula and interpretation](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/score.md)
 - [Default thresholds and calibration](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/docs/thresholds.md)
-- [Architecture and methodology](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/ARCH.md)
 - [Compatibility policy](https://raw.githubusercontent.com/BaryshevRS/stopslop/main/COMPATIBILITY.md)
 
 ## Package

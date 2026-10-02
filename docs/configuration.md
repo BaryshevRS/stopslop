@@ -62,7 +62,8 @@ the corpus it sits between count p95 ≈ 13 and p99 ≈ 38). Lower = stricter.
 ### `godClass` / `godModule` — object | false
 
 A class (or a module's top-level definitions) is flagged on **either** of two
-axes — see [ARCH.md](../ARCH.md) for the reasoning.
+axes, described below; [thresholds.md](thresholds.md) has the calibration behind
+the defaults.
 
 | field | meaning | default (class / module) |
 |---|---|---|

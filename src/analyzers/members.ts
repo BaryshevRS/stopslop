@@ -3,7 +3,7 @@ import { isTypeNode } from '../walk.js';
 
 // Extraction of cohesion members from a module and from each class, plus
 // lexical reference resolution. No type checker: resolution is scope-based
-// (module) or `this.<member>`-based (class). See ARCH.md "границы честности".
+// (module) or `this.<member>`-based (class).
 
 function isNode(v: unknown): v is OxcNode {
   return typeof v === 'object' && v !== null && typeof (v as { type?: unknown }).type === 'string';

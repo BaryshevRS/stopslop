@@ -4,6 +4,15 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/BaryshevRS/stopslop/compare/v1.1.0...v1.2.0) (2026-10-02)
+
+
+### Features
+
+* add agent plugins with a stop hook and the stopslop skill ([3693e7a](https://github.com/BaryshevRS/stopslop/commit/3693e7ad4bf4d25caf6643ee14f2d31b9616ac22))
+* agent plugins and rule help ([d11c3af](https://github.com/BaryshevRS/stopslop/commit/d11c3af457c0a74074babca5928a33e5a05fe374))
+* **report:** explain every rule in SARIF and JSON ([da960c1](https://github.com/BaryshevRS/stopslop/commit/da960c1648610671b55ba6eb3257d22e1e86f312))
+
 ## [1.1.0](https://github.com/BaryshevRS/stopslop/compare/v1.0.0...v1.1.0) (2026-10-02)
 
 

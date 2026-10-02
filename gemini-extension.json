@@ -1,5 +1,5 @@
 {
   "name": "stopslop",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Catch structural AI slop in JavaScript and TypeScript while the agent is still working: over-complex functions, god classes and modules, copy-pasted blocks, dead code, and features only their own test uses."
 }

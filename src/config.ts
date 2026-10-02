@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import type { KnipConfiguration } from 'knip';
 import type {
   CognitiveGate,
@@ -293,13 +293,33 @@ export function loadConfig(dir: string, explicitPath?: string): ResolvedConfig {
   const path = explicitPath ? resolve(explicitPath) : resolve(dir, 'stopslop.json');
   try {
     const raw = JSON.parse(readFileSync(path, 'utf8')) as StopSlopConfig;
-    return resolveConfig(raw);
+    return { ...resolveConfig(raw), configFile: realDirectory(path) };
   } catch (err) {
     if (explicitPath) {
       throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
     }
     const code = (err as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT' || code === 'ENOTDIR') return resolveConfig(undefined);
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
+      return { ...resolveConfig(undefined), configFile: realDirectory(path) };
+    }
     throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
   }
+}
+
+/**
+ * `file` with its directory's symlinks resolved, the way `analyze` resolves the
+ * root (`/tmp` is `/private/tmp` on macOS) — otherwise a path relative to that
+ * root walks out of it and back in through the unresolved name.
+ */
+function realDirectory(file: string): string {
+  try {
+    return join(realpathSync.native(dirname(file)), basename(file));
+  } catch {
+    return file;
+  }
+}
+
+/** The stopslop.json behind an analysis of `root`: the one loaded, else `root`'s own. */
+export function configFilePath(root: string, config: Pick<ResolvedConfig, 'configFile'>): string {
+  return config.configFile ?? resolve(root, 'stopslop.json');
 }

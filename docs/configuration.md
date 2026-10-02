@@ -183,9 +183,14 @@ and never merged. Move any settings StopSlop should use into this property.
 
 Workspace keys and overrides follow Knip unchanged: `.` configures the root,
 glob keys select groups of packages, and a more specific key can override a
-group. In a detected monorepo without `knip.workspaces`, findings are still
-shown but excluded from the dead-code score because entry-point detection is
-not trustworthy enough to grade the repository.
+group.
+
+Every run lists what Knip finds missing from this configuration under **config
+hints** (`configHints` in `--format json`): a workspace it never reached, an
+entry pattern that matched nothing, and how many unused files each accounts
+for. While Knip reports the project or a workspace as unconfigured, dead-code
+findings are shown but excluded from the score — without entry points, live
+files come back unreachable.
 
 In a single-package project, `entry` and `project` belong directly under
 `knip`. In a monorepo they belong under `knip.workspaces`; Knip ignores the

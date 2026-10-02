@@ -91,12 +91,36 @@ export interface AnalyzeContext {
   config: ResolvedConfig;
 }
 
+/**
+ * What Knip reports as missing from its configuration, computed from the run it
+ * just did. Knip owns this judgement — it knows which entry pattern matched
+ * nothing and which workspace it never reached, and it counts the files that
+ * hang off each. StopSlop adds one thing Knip cannot know: where the
+ * configuration lives.
+ */
+export interface ConfigHint {
+  /** Knip's hint type: `workspace-unconfigured`, `package-entry`, `ignore`, … */
+  type: string;
+  /** What it is about — a workspace key, a path, a dependency name. */
+  identifier: string;
+  /** Knip's own wording. */
+  message: string;
+  /** Workspace the hint belongs to — what tells two identical ones apart. */
+  workspace?: string;
+  /** File the hint is about, relative to the analyzed root. */
+  filePath?: string;
+  /** Unused files attributable to this hint, where Knip counted them. */
+  size?: number;
+}
+
 export interface ProjectContext {
   root: string;
   files: ParsedFile[];
   config: ResolvedConfig;
   /** Non-fatal notes from an engine (e.g. "knip skipped: no package.json"). */
   notes: string[];
+  /** Configuration Knip found missing. Empty when it has nothing to say. */
+  configHints: ConfigHint[];
   /**
    * What the Stage-2 engines actually measured. An engine that was disabled —
    * or that bailed out at runtime — leaves its entry unset, and the score then
@@ -203,4 +227,10 @@ export interface ResolvedConfig {
   ignore: string[];
   /** Whether current thresholds are provisional. False for the calibrated defaults. */
   preliminary: boolean;
+  /**
+   * The stopslop.json `loadConfig` read — or looked for, when there is none.
+   * Unset for an in-memory `resolveConfig()`; the analyzed root's own
+   * stopslop.json stands in then.
+   */
+  configFile?: string;
 }

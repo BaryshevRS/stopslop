@@ -1,4 +1,6 @@
+import { relative, sep } from 'node:path';
 import pc from 'picocolors';
+import { configFilePath } from '../config.js';
 import type { AnalyzeResult } from '../index.js';
 import type { SlopLevel } from '../score.js';
 import type { Finding } from '../types.js';
@@ -125,8 +127,31 @@ const LEVEL_COLOR: Record<SlopLevel, (s: string) => string> = {
   'legacy-grade': pc.red,
 };
 
+/**
+ * What Knip says is missing from the configuration. This block is the whole
+ * setup story: a dead-code run is only as good as its entry points, and Knip
+ * is the one that knows which of them came up empty. The last line names the
+ * file to edit — the one thing Knip cannot know, and the thing an agent
+ * otherwise guesses wrong by writing knip.json, which StopSlop never reads.
+ */
+function renderConfigHints(result: AnalyzeResult): string[] {
+  if (result.configHints.length === 0) return [];
+  const lines = ['', '  ' + pc.bold('config hints') + pc.dim('  (from Knip)')];
+  for (const hint of result.configHints) {
+    const where =
+      hint.workspace && hint.workspace !== hint.identifier ? `  in ${hint.workspace}` : '';
+    const size = hint.size === undefined ? '' : `  ·  ${hint.size} files`;
+    lines.push(`  ${pc.yellow(hint.identifier)}${pc.dim(where + size)}`);
+    lines.push('    ' + pc.dim(hint.message));
+  }
+  const file = relative(result.root, configFilePath(result.root, result.config)).split(sep).join('/');
+  lines.push('  ' + pc.dim(`→ Knip settings live under \`knip\` in ${file} (knip.json is not read)`));
+  lines.push('  ' + pc.dim('  reference: https://knip.dev/reference/configuration'));
+  return lines;
+}
+
 function renderFooter(result: AnalyzeResult): string[] {
-  const lines: string[] = [''];
+  const lines: string[] = [...renderConfigHints(result), ''];
   for (const note of result.notes) lines.push('  ' + pc.dim(note));
   if (result.config.preliminary) {
     lines.push('  ' + pc.yellow('thresholds are preliminary (pre-calibration) — see docs/thresholds.md'));

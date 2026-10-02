@@ -28,10 +28,10 @@ const context7 = JSON.parse(
 const llmsIndex = readFileSync(new URL('../llms.txt', import.meta.url), 'utf8');
 
 describe('published package manifest', () => {
-  it('pins Knip to exactly version 6.31.0', () => {
+  it('pins Knip to exactly version 6.39.0', () => {
     expect(packageManifest.name).toBe('stopslop');
     expect(packageManifest.dependencies?.knip ?? packageManifest.devDependencies?.knip).toBe(
-      '6.31.0',
+      '6.39.0',
     );
   });
 

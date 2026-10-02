@@ -14,7 +14,14 @@ async function run(
   files: ParsedFile[],
   config: ResolvedConfig = DEFAULT_CONFIG,
 ): Promise<{ findings: Finding[]; ctx: ProjectContext }> {
-  const ctx: ProjectContext = { root: '/', files, config, notes: [], metrics: {} };
+  const ctx: ProjectContext = {
+    root: '/',
+    files,
+    config,
+    notes: [],
+    configHints: [],
+    metrics: {},
+  };
   const findings = await duplicatesAnalyzer().analyzeProject!(ctx);
   return { findings, ctx };
 }

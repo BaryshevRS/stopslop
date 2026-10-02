@@ -26,7 +26,8 @@ console.log({
 
 `findings` contains the issues that should fail the current gate. `slop` always
 describes the complete analyzed repository. Check `errors` before trusting a
-result; `notes` explains non-fatal skips by project-level engines.
+result; `notes` explains non-fatal skips by project-level engines, and
+`configHints` lists what Knip reports as missing from `stopslop.json#knip`.
 
 ## Load `stopslop.json`
 

@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 import type { Issue, Issues } from 'knip/session';
-import type { KnipConfiguration } from 'knip';
-import type { Analyzer, DeadCodeGate, Finding, ProjectContext } from '../types.js';
+import type { Analyzer, ConfigHint, DeadCodeGate, Finding, ProjectContext } from '../types.js';
+import { configFilePath } from '../config.js';
 import { createKnipOptions } from '../knip-options.js';
 import { findOrphanFeatures } from './orphan-features.js';
 
@@ -35,17 +35,33 @@ export function deadCodeAnalyzer(): Analyzer {
         return [];
       }
 
+      // Where StopSlop reads its configuration from: the file `loadConfig` was
+      // pointed at (`--config`), else the analyzed root's stopslop.json. Knip
+      // words its hints against this path.
+      const configFile = configFilePath(ctx.root, ctx.config);
+
       let issues: Issues;
+      let configHints: ConfigHint[] = [];
       let orphans: Finding[] = [];
       const engineErrors: string[] = [];
       const restore = captureConsole(engineErrors);
       try {
-        const { createSession } = await import('knip/session');
+        const { createSession, finalizeConfigurationHints } = await import('knip/session');
         const options = await createKnipOptions(packageRoot, ctx.config, {
           isProduction: gate.production,
         });
         const session = await createSession(options);
-        issues = session.getResults().issues;
+        const results = session.getResults();
+        issues = results.issues;
+        // Knip already knows what its configuration is missing: which entry
+        // pattern matched nothing, which workspace it never reached, how many
+        // files hang off each. Asking it beats inferring the same thing from
+        // the outside — and telling it a config file exists is what keeps the
+        // wording ours, since it then says "add entry" instead of naming
+        // knip.json, which StopSlop does not read.
+        configHints = toConfigHints(
+          finalizeConfigurationHints(results, { cwd: packageRoot, configFilePath: configFile }),
+        );
         // Orphans come from the same session's module graph, not a second run:
         // `describeFile` answers who imports each export, which is exactly the
         // question, and answers it through Knip's own resolution of barrels and
@@ -71,12 +87,17 @@ export function deadCodeAnalyzer(): Analyzer {
         );
       }
 
-      // On an unconfigured monorepo the results are reported but not scored:
-      // leaving `deadCodeMeasured` unset drops the signal from the score
-      // denominator instead of counting the noise against the repo.
-      if (isUnconfiguredMonorepo(packageRoot, ctx.config.knip)) {
+      ctx.configHints.push(...configHints);
+
+      // Knip's own verdict on whether the run was configured at all: it raises
+      // these two hints when unreachable files pass a share of the project that
+      // only a missing entry or workspace configuration explains. Results from
+      // such a run are reported but not scored — leaving `deadCodeMeasured`
+      // unset drops the signal from the denominator instead of counting a
+      // landslide of false positives against the repository.
+      if (isUnconfigured(configHints)) {
         ctx.notes.push(
-          'dead code: monorepo without stopslop.json#knip.workspaces — findings shown but excluded from the score (configure workspaces and entry points under knip in stopslop.json to make them count)',
+          `dead code: Knip reports this run as unconfigured — findings shown but excluded from the score (fix the config hints in ${relative(ctx.root, configFile).split(sep).join('/')})`,
         );
       } else {
         ctx.metrics.deadCodeMeasured = true;
@@ -174,33 +195,32 @@ function toRelative(
   return rel;
 }
 
-const WORKSPACE_MARKERS = ['nx.json', 'pnpm-workspace.yaml', 'lerna.json', 'turbo.json'];
+/** Knip's two hints that mean "this run had no usable configuration". */
+export function isUnconfigured(hints: ConfigHint[]): boolean {
+  return hints.some(
+    (hint) => hint.type === 'top-level-unconfigured' || hint.type === 'workspace-unconfigured',
+  );
+}
 
-/**
- * A monorepo whose Knip run is unconfigured. Knip needs to know the workspaces
- * and their entry points; without that it calls an app's own `main.ts`
- * unreachable and every workspace tool an unused dependency. The findings can
- * still be worth a look, but they must not feed the score — a landslide of
- * false positives would otherwise outrank real structural slop.
- */
-export function isUnconfiguredMonorepo(
-  packageRoot: string,
-  knipConfig?: KnipConfiguration,
-): boolean {
-  if (knipConfig?.workspaces !== undefined) return false;
-  try {
-    const pkg = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8')) as {
-      workspaces?: unknown;
-    };
-    if (pkg.workspaces !== undefined) return true;
-  } catch {
-    // fall through to marker files
-  }
-  const hasMarker = WORKSPACE_MARKERS.some((f) => existsSync(resolve(packageRoot, f)));
-  // This helper is normally called only after finding a package.json. If the
-  // manifest disappeared or is unreadable, stay conservative and do not score
-  // the run as a configured single-package project.
-  return hasMarker || !existsSync(resolve(packageRoot, 'package.json'));
+/** Knip's processed hints, narrowed to what a report needs. */
+function toConfigHints(
+  rows: {
+    type: string;
+    identifier: string | RegExp;
+    message: string;
+    workspaceName?: string;
+    filePath?: string;
+    size?: number;
+  }[],
+): ConfigHint[] {
+  return rows.map((row) => ({
+    type: row.type,
+    identifier: row.identifier instanceof RegExp ? row.identifier.source : String(row.identifier),
+    message: row.message,
+    ...(row.workspaceName === undefined ? {} : { workspace: row.workspaceName }),
+    ...(row.filePath === undefined ? {} : { filePath: row.filePath }),
+    ...(row.size === undefined ? {} : { size: row.size }),
+  }));
 }
 
 /** True when package.json declares dependencies but node_modules is absent. */

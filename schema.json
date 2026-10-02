@@ -343,6 +343,9 @@
         "ignoreBinaries": {
           "$ref": "#/definitions/knip/definitions/ignoreBinaries"
         },
+        "ignoreGlobalBinaries": {
+          "$ref": "#/definitions/knip/definitions/ignoreGlobalBinaries"
+        },
         "ignoreDependencies": {
           "$ref": "#/definitions/knip/definitions/ignoreDependencies"
         },
@@ -513,6 +516,21 @@
             }
           }
         },
+        "preprocessor": {
+          "title": "Preprocess the results before providing them to the reporter(s)",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/knip/definitions/list"
+            }
+          ]
+        },
+        "preprocessorOptions": {
+          "title": "Extra options to pass to the preprocessor",
+          "type": "object"
+        },
         "treatConfigHintsAsErrors": {
           "title": "Exit with non-zero code (1) if there are any configuration hints",
           "type": "boolean"
@@ -538,6 +556,12 @@
             "curl"
           ],
           "$ref": "#/definitions/knip/definitions/list"
+        },
+        "ignoreGlobalBinaries": {
+          "title": "Ignore common global binaries",
+          "description": "Set to false to report required binaries otherwise excluded by Knip's default list. Explicit ignoreBinaries entries still apply.",
+          "type": "boolean",
+          "default": true
         },
         "ignoreDependencies": {
           "title": "Dependencies to exclude from the report (regex allowed)",
@@ -710,6 +734,9 @@
             "ignoreBinaries": {
               "$ref": "#/definitions/knip/definitions/ignoreBinaries"
             },
+            "ignoreGlobalBinaries": {
+              "$ref": "#/definitions/knip/definitions/ignoreGlobalBinaries"
+            },
             "ignoreDependencies": {
               "$ref": "#/definitions/knip/definitions/ignoreDependencies"
             },
@@ -809,6 +836,10 @@
             },
             "biome": {
               "title": "biome plugin configuration (https://knip.dev/reference/plugins/biome)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "borp": {
+              "title": "borp plugin configuration (https://knip.dev/reference/plugins/borp)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "bumpp": {
@@ -1027,6 +1058,10 @@
               "title": "metro plugin configuration (https://knip.dev/reference/plugins/metro)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "mise": {
+              "title": "mise plugin configuration (https://knip.dev/reference/plugins/mise)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "mocha": {
               "title": "Mocha plugin configuration (https://knip.dev/reference/plugins/mocha)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1167,6 +1202,10 @@
               "title": "PostCSS plugin configuration (https://knip.dev/reference/plugins/postcss)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "pre-commit": {
+              "title": "pre-commit plugin configuration (https://knip.dev/reference/plugins/pre-commit)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "preconstruct": {
               "title": "preconstruct plugin configuration (https://knip.dev/reference/plugins/preconstruct)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1185,6 +1224,10 @@
             },
             "qwik": {
               "title": "qwik plugin configuration (https://knip.dev/reference/plugins/qwik)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "railway": {
+              "title": "railway plugin configuration (https://knip.dev/reference/plugins/railway)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "react-cosmos": {
@@ -1339,12 +1382,20 @@
               "title": "temporal plugin configuration (https://knip.dev/reference/plugins/temporal)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "textlint": {
+              "title": "textlint plugin configuration (https://knip.dev/reference/plugins/textlint)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "travis": {
               "title": "travis plugin configuration (https://knip.dev/reference/plugins/travis)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "ts-node": {
               "title": "ts-node plugin configuration (https://knip.dev/reference/plugins/ts-node)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "tsd": {
+              "title": "tsd plugin configuration (https://knip.dev/reference/plugins/tsd)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "tsdown": {
@@ -1359,12 +1410,20 @@
               "title": "tsx plugin configuration (https://knip.dev/reference/plugins/tsx)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "turbo": {
+              "title": "turbo plugin configuration (https://knip.dev/reference/plugins/turbo)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "typedoc": {
               "title": "typedoc plugin configuration (https://knip.dev/reference/plugins/typedoc)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "typescript": {
               "title": "TypeScript plugin configuration (https://knip.dev/reference/plugins/typescript)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "typescript-content-mapper": {
+              "title": "typescript-content-mapper plugin configuration (https://knip.dev/reference/plugins/typescript-content-mapper)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "unbuild": {
@@ -1397,6 +1456,10 @@
             },
             "unplugin-vue-router": {
               "title": "unplugin-vue-router plugin configuration (https://knip.dev/reference/plugins/unplugin-vue-router)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "varlock": {
+              "title": "varlock plugin configuration (https://knip.dev/reference/plugins/varlock)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "vercel": {

@@ -46,9 +46,10 @@ Three properties are deliberate:
   axis, and the other axes still matter. Without the cap, one pathological file
   would drown out everything else.
 - **A check that did not run leaves the formula.** If you turn off `deadCode` — or
-  if Knip bails out because the project's dependencies are not installed, or the
-  project is a monorepo without `stopslop.json#knip.workspaces` (where Knip's
-  entry-point detection produces a landslide of false "unused") — its weight drops out of the
+  if Knip bails out because the project's dependencies are not installed, or
+  Knip reports the run as unconfigured (its `top-level-unconfigured` or
+  `workspace-unconfigured` config hint: more files unreachable than anything but
+  missing entry points explains) — its weight drops out of the
   denominator instead of contributing zero. Not measuring something must never
   read as a clean bill of health. The terminal report shows only the signals
   that were actually measured, and says in a note why one is missing.

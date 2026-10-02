@@ -2,7 +2,6 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { isUnconfiguredMonorepo } from '../src/analyzers/dead-code.js';
 import { createKnipOptions } from '../src/knip-options.js';
 
 const fixtures: string[] = [];
@@ -101,32 +100,5 @@ describe('stopslop Knip options', () => {
     expect(options.parsedConfig.workspaces).toEqual({
       'packages/*': { entry: ['src/index.ts'] },
     });
-  });
-});
-
-describe('unconfigured-monorepo guard', () => {
-  it('uses only stopslop knip.workspaces, including dot and glob workspace keys', () => {
-    expect(isUnconfiguredMonorepo('/repo')).toBe(true);
-    expect(isUnconfiguredMonorepo('/repo', { workspaces: {} })).toBe(false);
-    expect(
-      isUnconfiguredMonorepo('/repo', {
-        workspaces: {
-          '.': { entry: ['src/index.ts'] },
-          'packages/*': { project: ['src/**/*.ts'] },
-        },
-      }),
-    ).toBe(false);
-  });
-
-  it('does not treat ambient Knip config files or package.json#knip as configuration', () => {
-    const root = fixture();
-    write(
-      root,
-      'package.json',
-      JSON.stringify({ workspaces: ['packages/*'], knip: { workspaces: { 'packages/*': {} } } }),
-    );
-    write(root, 'knip.json', JSON.stringify({ workspaces: { 'packages/*': {} } }));
-
-    expect(isUnconfiguredMonorepo(root)).toBe(true);
   });
 });

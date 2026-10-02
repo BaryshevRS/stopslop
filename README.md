@@ -1,6 +1,6 @@
 # StopSlop
 
-[![AI slop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop) [![clone-alert: 0 clones](https://img.shields.io/badge/clone--alert-0%20clones-brightgreen)](https://github.com/BaryshevRS/clone-alert) [![CI](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml/badge.svg)](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/stopslop.svg)](https://www.npmjs.com/package/stopslop)
+[![StopSlop](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BaryshevRS/stopslop/main/stopslop-badge.json)](https://github.com/BaryshevRS/stopslop) [![clone-alert: 0 clones](https://img.shields.io/badge/clone--alert-0%20clones-brightgreen)](https://github.com/BaryshevRS/clone-alert) [![CI](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml/badge.svg)](https://github.com/BaryshevRS/stopslop/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/stopslop.svg)](https://www.npmjs.com/package/stopslop)
 <!-- clone-alert badge: pnpm exec clone-alert --minimum-tokens 100 --files src --format shields --no-fail-on-violation -->
 
 **Stop AI-generated code from becoming instant legacy.**
@@ -252,6 +252,31 @@ See [docs/configuration.md](docs/configuration.md) for every field, default, and
 Knip workspace example. See [stopslop.example.json](stopslop.example.json) for a
 complete configuration.
 
+### Dead-code configuration
+
+Knip settings go under `knip` in `stopslop.json`. A project's own `knip.json`,
+`.knip.json`, `knip.config.*` and `package.json#knip` are never read, so an
+analysis does not change with whatever happens to sit in the directory.
+Everything in [Knip's configuration reference](https://knip.dev/reference/configuration)
+works there unchanged.
+
+You do not have to work out what belongs there. Run the analysis and Knip
+reports what its configuration is missing — which workspace it never reached,
+which declared entry point resolved to nothing — under **config hints**, with
+the file count each one accounts for:
+
+```
+  config hints  (from Knip)
+  packages/core  ·  12 files
+    Add entry and/or refine project files in workspaces["packages/core"] (12 unused files)
+  → Knip settings live under `knip` in stopslop.json (knip.json is not read)
+    reference: https://knip.dev/reference/configuration
+```
+
+Address them, run again, repeat until they are gone. Until then dead code is
+reported but left out of the score, because a run without entry points reports
+live files as unreachable. The same list is in `configHints` of `--format json`.
+
 ## Node.js API
 
 StopSlop ships ESM JavaScript and TypeScript declarations for programmatic use:
@@ -277,7 +302,8 @@ is experimental before 1.0; see [COMPATIBILITY.md](COMPATIBILITY.md).
   directories are excluded by default.
 - A high score does not prove poor engineering, and a low score does not prove
   correctness. StopSlop measures structural overproduction, not total quality.
-- Dead-code accuracy depends on Knip knowing the project's entry points.
+- Dead-code accuracy depends on Knip knowing the project's entry points; the
+  run says so through config hints when it does not.
 - A baseline accepts finding identities. If an accepted function becomes more
   complex without changing identity, the score rises but the gate stays clear.
 

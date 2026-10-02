@@ -4,7 +4,14 @@ import { mkdtemp, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
-import type { Analyzer, Finding, ParsedFile, ProjectMetrics, ResolvedConfig } from './types.js';
+import type {
+  Analyzer,
+  ConfigHint,
+  Finding,
+  ParsedFile,
+  ProjectMetrics,
+  ResolvedConfig,
+} from './types.js';
 import { applyBaseline, fingerprint } from './baseline.js';
 import { discover } from './discover.js';
 import { parseFile } from './parse.js';
@@ -14,7 +21,7 @@ import { duplicatesAnalyzer } from './analyzers/duplicates.js';
 import { deadCodeAnalyzer } from './analyzers/dead-code.js';
 import { computeScore, type SlopScore } from './score.js';
 
-export type { Analyzer, Finding, ResolvedConfig, ParsedFile } from './types.js';
+export type { Analyzer, ConfigHint, Finding, ResolvedConfig, ParsedFile } from './types.js';
 export { loadConfig, resolveConfig, DEFAULT_CONFIG, type StopSlopConfig } from './config.js';
 export { computeScore, levelFor, type SlopScore, type SlopLevel } from './score.js';
 export {
@@ -36,6 +43,8 @@ export interface AnalyzeResult {
   errors: string[];
   /** Non-fatal notes from the Stage-2 engines (skipped checks, and why). */
   notes: string[];
+  /** What Knip reports as missing from `stopslop.json#knip`, from this run. */
+  configHints: ConfigHint[];
   config: ResolvedConfig;
   elapsedMs: number;
   /**
@@ -79,6 +88,7 @@ export async function analyze(
   const parsed: ParsedFile[] = [];
   const errors: string[] = [];
   const notes: string[] = [];
+  const configHints: ConfigHint[] = [];
   const findings: Finding[] = [];
   const metrics: Partial<ProjectMetrics> = {};
   const ctx = { config };
@@ -111,7 +121,7 @@ export async function analyze(
     }
   }
 
-  const projectCtx = { root: absRoot, files: parsed, config, notes, metrics };
+  const projectCtx = { root: absRoot, files: parsed, config, notes, configHints, metrics };
   for (const analyzer of analyzers) {
     if (!analyzer.analyzeProject) continue;
     try {
@@ -131,6 +141,7 @@ export async function analyze(
     metrics,
     errors,
     notes,
+    configHints,
     config,
     elapsedMs: Math.round(performance.now() - start),
   };

@@ -5,7 +5,8 @@ import { RULE_KINDS, ruleHelp } from '../src/report/rules.js';
 import { resolveConfig } from '../src/index.js';
 import type { AnalyzeResult, Finding } from '../src/index.js';
 
-const rulesDoc = readFileSync(new URL('../docs/rules.md', import.meta.url), 'utf8');
+// A Windows checkout may hold the file with CRLF line endings.
+const rulesDoc = readFileSync(new URL('../docs/rules.md', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 
 describe('rule help', () => {
   it.each(RULE_KINDS)('%s links to its own section of docs/rules.md', (kind) => {

@@ -4,16 +4,7 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-01)
-
-
-### Bug Fixes
-
-* analyze anonymous function owners for cognitive complexity ([34c3ec7](https://github.com/BaryshevRS/stopslop/commit/34c3ec795a8d65ecaf2d609939cb9a0cd8815984))
-* clarify orphan feature remediation and document example ([c052026](https://github.com/BaryshevRS/stopslop/commit/c052026e5df0e52cff1438ae54ca4445cce7aee6))
-* **deps:** update analysis engines and adapt Knip catalogs ([e19e2c9](https://github.com/BaryshevRS/stopslop/commit/e19e2c93ebe26641ea9805aa38889f50056181af))
-
-## [Unreleased]
+## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-02)
 
 ### Fixed
 
@@ -21,6 +12,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   owners in cognitive-complexity checks. Inline route handlers were previously
   skipped when no enclosing named function owned them. Nested functions remain
   counted once, as part of their owner.
+- Recommend connecting an orphan feature to production when it is needed, or
+  removing it with its test when it is not. Add a verified example to the README.
 
 ### Changed
 

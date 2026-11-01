@@ -1,6 +1,6 @@
 # Compatibility
 
-Last updated: 1.1.0
+Last updated: 1.2.1 (2026-11-02)
 
 StopSlop follows Semantic Versioning. Stable surfaces change incompatibly only
 in a major release. Experimental surfaces may change in a minor release; such
@@ -19,6 +19,10 @@ Findings and scores are not a compatibility surface. Detector fixes, threshold
 calibration, and Knip or Clone Alert updates can change what a release reports
 for the same code; such changes are called out in the changelog. Pin the
 StopSlop version in CI when a gate must not move without a commit.
+
+Version 1.2.1 preserves all stable surfaces and adds no deprecations. Anonymous
+function detection and analysis-engine updates can produce new findings or
+different scores for existing code.
 
 ## Runtime support
 

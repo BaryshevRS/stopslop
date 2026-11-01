@@ -4,6 +4,16 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Update Knip from 6.39.0 to 6.44.1, Clone Alert from 1.1.3 to 1.1.5, and
+  oxc-parser from 0.139.0 to 0.156.0. Engine updates can change findings and scores
+  for the same codebase. Knip remains pinned to the verified version.
+- Adapt the Knip integration to its catalog array API and regenerate the
+  configuration schema from the updated Knip release.
+
 ## [1.2.0](https://github.com/BaryshevRS/stopslop/compare/v1.1.0...v1.2.0) (2026-10-02)
 
 

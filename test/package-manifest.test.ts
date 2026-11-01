@@ -32,10 +32,10 @@ const llmsIndex = readFileSync(new URL('../llms.txt', import.meta.url), 'utf8');
 const agentManifests = ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', 'gemini-extension.json'];
 
 describe('published package manifest', () => {
-  it('pins Knip to exactly version 6.39.0', () => {
+  it('pins Knip to exactly version 6.44.1', () => {
     expect(packageManifest.name).toBe('stopslop');
     expect(packageManifest.dependencies?.knip ?? packageManifest.devDependencies?.knip).toBe(
-      '6.39.0',
+      '6.44.1',
     );
   });
 

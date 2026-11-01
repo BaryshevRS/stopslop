@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import type { KnipConfiguration } from 'knip';
 import type { MainOptions } from 'knip/session';
 import type { ResolvedConfig } from './types.js';
@@ -73,7 +73,9 @@ export async function createKnipOptions(
     knipOptions.cacheLocation = join(root, 'node_modules', '.cache', 'knip');
     knipOptions.config = undefined;
     knipOptions.configFilePath = undefined;
-    knipOptions.catalog.filePath = existsSync(pnpmWorkspacePath) ? pnpmWorkspacePath : manifestPath;
+    for (const catalog of knipOptions.catalog) {
+      catalog.filePath = resolve(root, relative(bootstrap, catalog.filePath)).replaceAll('\\', '/');
+    }
 
     return knipOptions;
   } finally {

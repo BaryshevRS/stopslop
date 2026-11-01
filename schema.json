@@ -842,6 +842,10 @@
               "title": "borp plugin configuration (https://knip.dev/reference/plugins/borp)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "buf": {
+              "title": "buf plugin configuration (https://knip.dev/reference/plugins/buf)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "bumpp": {
               "title": "bumpp plugin configuration (https://knip.dev/reference/plugins/bumpp)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -922,6 +926,10 @@
               "title": "Drizzle plugin configuration (https://knip.dev/reference/plugins/drizzle)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "electron-forge": {
+              "title": "Electron Forge plugin configuration (https://knip.dev/reference/plugins/electron-forge)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "electron-vite": {
               "title": "electron-vite plugin configuration (https://knip.dev/reference/plugins/electron-vite)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -950,12 +958,24 @@
               "title": "Expo plugin configuration (https://knip.dev/reference/plugins/expo)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "expo-router": {
+              "title": "Expo Router plugin configuration (https://knip.dev/reference/plugins/expo-router)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "expressive-code": {
               "title": "expressive-code plugin configuration (https://knip.dev/reference/plugins/expressive-code)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "fast": {
               "title": "fast plugin configuration (https://knip.dev/reference/plugins/fast)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "filesystem-routing": {
+              "title": "filesystem-routing plugin configuration (https://knip.dev/reference/plugins/filesystem-routing)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "flue": {
+              "title": "flue plugin configuration (https://knip.dev/reference/plugins/flue)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "fumadocs": {
@@ -990,6 +1010,10 @@
               "title": "i18next-parser plugin configuration (https://knip.dev/reference/plugins/i18next-parser)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "jasmine": {
+              "title": "jasmine plugin configuration (https://knip.dev/reference/plugins/jasmine)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "jest": {
               "title": "Jest plugin configuration (https://knip.dev/reference/plugins/jest)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1002,6 +1026,10 @@
               "title": "knex plugin configuration (https://knip.dev/reference/plugins/knex)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "kysely-codegen": {
+              "title": "kysely-codegen plugin configuration (https://knip.dev/reference/plugins/kysely-codegen)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "ladle": {
               "title": "ladle plugin configuration (https://knip.dev/reference/plugins/ladle)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1012,6 +1040,10 @@
             },
             "lefthook": {
               "title": "lefthook plugin configuration (https://knip.dev/reference/plugins/lefthook)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "lingui": {
+              "title": "lingui plugin configuration (https://knip.dev/reference/plugins/lingui)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "lint-staged": {
@@ -1044,6 +1076,14 @@
             },
             "marko": {
               "title": "marko plugin configuration (https://knip.dev/reference/plugins/marko)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "mastra": {
+              "title": "mastra plugin configuration (https://knip.dev/reference/plugins/mastra)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "mcp": {
+              "title": "mcp plugin configuration (https://knip.dev/reference/plugins/mcp)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "mdx": {
@@ -1158,6 +1198,10 @@
               "title": "orval plugin configuration (https://knip.dev/reference/plugins/orval)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "osls": {
+              "title": "osls plugin configuration (https://knip.dev/reference/plugins/osls)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "oxfmt": {
               "title": "oxfmt plugin configuration (https://knip.dev/reference/plugins/oxfmt)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1216,6 +1260,10 @@
             },
             "prisma": {
               "title": "Prisma plugin configuration (https://knip.dev/reference/plugins/prisma)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "purgecss": {
+              "title": "purgecss plugin configuration (https://knip.dev/reference/plugins/purgecss)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "quasar": {
@@ -1310,6 +1358,10 @@
               "title": "size-limit plugin configuration (https://knip.dev/reference/plugins/size-limit)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "solidjs-vite-plugin": {
+              "title": "solidjs-vite-plugin plugin configuration (https://knip.dev/reference/plugins/solidjs-vite-plugin)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "sst": {
               "title": "sst plugin configuration (https://knip.dev/reference/plugins/sst)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1400,6 +1452,10 @@
             },
             "tsdown": {
               "title": "tsdown plugin configuration (https://knip.dev/reference/plugins/tsdown)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "tsrs": {
+              "title": "tsrs plugin configuration (https://knip.dev/reference/plugins/tsrs)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "tsup": {

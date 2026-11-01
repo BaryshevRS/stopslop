@@ -1,6 +1,7 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createSession } from 'knip/session';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createKnipOptions } from '../src/knip-options.js';
 
@@ -23,6 +24,32 @@ afterEach(() => {
 });
 
 describe('stopslop Knip options', () => {
+  it.each(['package.json', 'pnpm-workspace.yaml'] as const)(
+    'keeps catalog sources in %s readable after bootstrap cleanup',
+    async (catalogFile) => {
+      const root = fixture();
+      write(
+        root,
+        'package.json',
+        JSON.stringify({
+          name: 'fixture',
+          ...(catalogFile === 'package.json' ? { catalog: { 'unused-package': '^1.0.0' } } : {}),
+        }),
+      );
+      if (catalogFile === 'pnpm-workspace.yaml') {
+        write(root, catalogFile, 'catalog:\n  unused-package: ^1.0.0\n');
+      }
+
+      const options = await createKnipOptions(root, {
+        knip: { entry: ['src/entry.ts'], project: ['src/**/*.ts'] },
+      });
+
+      expect(options.catalog[0]?.filePath).toBe(join(root, catalogFile).replaceAll('\\', '/'));
+      const session = await createSession(options);
+      expect(Object.keys(session.getResults().issues.catalog)).toContain(catalogFile);
+    },
+  );
+
   it('uses only stopslop.knip, never ambient Knip configuration sources', async () => {
     const root = fixture();
     // If Knip's normal config discovery runs, package.json#knip fails validation,

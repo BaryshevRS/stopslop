@@ -6,6 +6,13 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Include anonymous callbacks, default exports, and other unnamed function
+  owners in cognitive-complexity checks. Inline route handlers were previously
+  skipped when no enclosing named function owned them. Nested functions remain
+  counted once, as part of their owner.
+
 ### Changed
 
 - Update Knip from 6.39.0 to 6.44.1, Clone Alert from 1.1.3 to 1.1.5, and

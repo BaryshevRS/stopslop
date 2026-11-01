@@ -142,11 +142,13 @@ export interface FunctionUnit {
 /**
  * Collect top-level-ish functions/methods with names and scores. Nested
  * functions are folded into their owner (not reported separately), which keeps
- * a slop report readable. Named via declaration/assignment context.
+ * a slop report readable. Anonymous owners get a contextual name, so a missing
+ * declaration/assignment name never excludes a function from analysis.
  */
 export function collectFunctions(file: ParsedFile): FunctionUnit[] {
   const units: FunctionUnit[] = [];
   const classStack: string[] = [];
+  const anonymousNames = new Map<string, number>();
 
   function nameFor(node: OxcNode, parent: OxcNode | null): string | null {
     if (node.type === 'FunctionDeclaration') {
@@ -170,6 +172,23 @@ export function collectFunctions(file: ParsedFile): FunctionUnit[] {
     return null;
   }
 
+  function anonymousName(node: OxcNode, parent: OxcNode | null): string {
+    if (isChild(node.id) && typeof node.id.name === 'string') return node.id.name;
+    if (parent?.type === 'ExportDefaultDeclaration') return 'default';
+    if (parent?.type !== 'CallExpression' && parent?.type !== 'NewExpression') return '<anonymous>';
+    const callee = parent.callee;
+    if (!isChild(callee)) return '<anonymous>';
+    const target = callee.type === 'MemberExpression' ? callee.property : callee;
+    if (!isChild(target)) return '<anonymous>';
+    const name = target.name ?? target.value;
+    if (typeof name !== 'string') return '<anonymous>';
+    const firstArg = asArray(parent.arguments)[0];
+    const label = firstArg?.type === 'Literal' && typeof firstArg.value === 'string'
+      ? `${name}(${JSON.stringify(firstArg.value)})`
+      : name;
+    return `${label} callback`;
+  }
+
   function walk(node: OxcNode, parent: OxcNode | null): void {
     if (isTypeNode(node.type)) return;
     const isClass = node.type === 'ClassDeclaration' || node.type === 'ClassExpression';
@@ -178,18 +197,21 @@ export function collectFunctions(file: ParsedFile): FunctionUnit[] {
       classStack.push(id ? String(id.name) : '<anonymous>');
     }
     if (FUNCTIONS.has(node.type)) {
-      const name = nameFor(node, parent);
-      if (name) {
-        units.push({
-          name,
-          node,
-          line: file.lineAt(node.start),
-          complexity: computeCognitiveComplexity(node),
-        });
-        // Do not descend — nested functions are folded into this score.
-        if (isClass) classStack.pop();
-        return;
+      let name = nameFor(node, parent);
+      if (!name) {
+        const base = anonymousName(node, parent);
+        const count = (anonymousNames.get(base) ?? 0) + 1;
+        anonymousNames.set(base, count);
+        name = count === 1 ? base : `${base}#${count}`;
       }
+      units.push({
+        name,
+        node,
+        line: file.lineAt(node.start),
+        complexity: computeCognitiveComplexity(node),
+      });
+      // Do not descend — nested functions are folded into this score.
+      return;
     }
     for (const child of childNodes(node)) walk(child, node);
     if (isClass) classStack.pop();

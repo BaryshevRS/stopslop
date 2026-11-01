@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseFile } from '../src/parse.js';
-import { collectFunctions, computeCognitiveComplexity } from '../src/analyzers/cognitive-complexity.js';
+import { collectFunctions, computeCognitiveComplexity, cognitiveComplexityAnalyzer } from '../src/analyzers/cognitive-complexity.js';
+import { resolveConfig } from '../src/config.js';
 import type { OxcNode } from '../src/types.js';
 
 function scoreOf(code: string, fnName?: string): number {
@@ -97,6 +98,88 @@ describe('cognitive complexity — structural rules', () => {
 });
 
 describe('collectFunctions — naming & granularity', () => {
+  const nestedBranches = 'if (a) { if (b) { if (c) { if (d) { if (e) { if (f) {} } } } } }';
+
+  it.each(['(req, res) =>', 'async (req, res) =>', 'function (req, res)'])(
+    'reports inline route handlers written as %s',
+    (signature) => {
+      const source = `app.get('/users', ${signature} { ${nestedBranches} });`;
+      const { file } = parseFile('routes.ts', '/routes.ts', source);
+      const findings = cognitiveComplexityAnalyzer().analyzeFile!(file!, {
+        config: resolveConfig({}),
+      });
+
+      expect(findings).toMatchObject([{
+        kind: 'cognitive-complexity',
+        file: 'routes.ts',
+        symbol: 'get("/users") callback',
+        line: 1,
+        data: { complexity: 21, threshold: 15 },
+      }]);
+      expect(scoreOf(`const handler = ${signature} { ${nestedBranches} };`)).toBe(21);
+    },
+  );
+
+  it('collects generic callbacks, chained routes, and each middleware separately', () => {
+    const { file } = parseFile('routes.ts', '/routes.ts', `
+      emitter.on('message', () => { if (a) {} });
+      app.route('/users').get(() => { if (a) {} }, () => { if (a) { if (b) {} } });
+      app.post('/users', () => {});
+    `);
+
+    expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'on("message") callback', complexity: 1 },
+      { name: 'get callback', complexity: 1 },
+      { name: 'get callback#2', complexity: 3 },
+      { name: 'post("/users") callback', complexity: 0 },
+    ]);
+  });
+
+  it.each([
+    'export default function () { if (a) {} }',
+    'export default () => { if (a) {} };',
+  ])('collects anonymous default exports: %s', (source) => {
+    const { file } = parseFile('t.ts', '/t.ts', source);
+
+    expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'default', complexity: 1 },
+    ]);
+  });
+
+  it('folds nested functions into an anonymous owner exactly once', () => {
+    const { file } = parseFile('t.ts', '/t.ts', `
+      subscribe(() => { values.forEach(value => { if (value) {} }); });
+    `);
+
+    expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'subscribe callback', complexity: 2 },
+    ]);
+  });
+
+  it('keeps callbacks inside a named owner folded into that owner', () => {
+    const { file } = parseFile('t.ts', '/t.ts', `
+      function setup(app) { app.get('/users', () => { if (a) {} }); }
+    `);
+
+    expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'setup', complexity: 2 },
+    ]);
+  });
+
+  it('collects unnamed functions outside calls and keeps their identity when lines move', () => {
+    const source = 'const handlers = [() => { if (a) {} }, function () { if (b) {} }];';
+    const { file } = parseFile('t.ts', '/t.ts', source);
+    const { file: moved } = parseFile('t.ts', '/t.ts', `// comment\n\n${source}`);
+    const summarize = (parsed: NonNullable<typeof file>) =>
+      collectFunctions(parsed).map(({ name, complexity }) => ({ name, complexity }));
+
+    expect(summarize(file!)).toEqual([
+      { name: '<anonymous>', complexity: 1 },
+      { name: '<anonymous>#2', complexity: 1 },
+    ]);
+    expect(summarize(moved!)).toEqual(summarize(file!));
+  });
+
   it('names class methods as Class.method and folds nested funcs', () => {
     const code = `
       class A {

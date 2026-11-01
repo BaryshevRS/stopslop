@@ -4,6 +4,31 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/BaryshevRS/stopslop/compare/v1.2.1...v1.0.0) (2026-11-01)
+
+
+### Features
+
+* add agent plugins with a stop hook and the stopslop skill ([3693e7a](https://github.com/BaryshevRS/stopslop/commit/3693e7ad4bf4d25caf6643ee14f2d31b9616ac22))
+* agent plugins and rule help ([d11c3af](https://github.com/BaryshevRS/stopslop/commit/d11c3af457c0a74074babca5928a33e5a05fe374))
+* **dead-code:** report Knip configuration hints ([4e06762](https://github.com/BaryshevRS/stopslop/commit/4e06762878a6380234bc98f439fb6a26f85e0ad6))
+* make AI slop badge a baseline gate ([e1e599f](https://github.com/BaryshevRS/stopslop/commit/e1e599fd61c3897e798a534ea0866370f690557c))
+* optimize npm and Context7 discovery ([9a22e93](https://github.com/BaryshevRS/stopslop/commit/9a22e9305a0f1ea2dcfd35be04abcccef7f1752a))
+* **report:** explain every rule in SARIF and JSON ([da960c1](https://github.com/BaryshevRS/stopslop/commit/da960c1648610671b55ba6eb3257d22e1e86f312))
+
+
+### Bug Fixes
+
+* analyze anonymous function owners for cognitive complexity ([34c3ec7](https://github.com/BaryshevRS/stopslop/commit/34c3ec795a8d65ecaf2d609939cb9a0cd8815984))
+* **ci:** keep npm pack JSON clean ([c512786](https://github.com/BaryshevRS/stopslop/commit/c5127861c3f56ac014607e1c908aa3cbff34810a))
+* clarify orphan feature remediation and document example ([c052026](https://github.com/BaryshevRS/stopslop/commit/c052026e5df0e52cff1438ae54ca4445cce7aee6))
+* **deps:** update analysis engines and adapt Knip catalogs ([e19e2c9](https://github.com/BaryshevRS/stopslop/commit/e19e2c93ebe26641ea9805aa38889f50056181af))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([14c73a6](https://github.com/BaryshevRS/stopslop/commit/14c73a6e768aa774ee840275b8f32491b9ee6a9a))
+
 ## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-02)
 
 ### Fixed

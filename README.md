@@ -42,6 +42,41 @@ uses [Clone Alert](https://www.npmjs.com/package/clone-alert); dead-code analysi
 uses [Knip](https://knip.dev). StopSlop detects code patterns, not whether a human
 or an AI wrote them.
 
+## A passing test does not mean the feature is connected
+
+An agent adds a discount function and a test:
+
+```ts
+// src/discount.ts
+export function applyDiscount(total: number): number {
+  return total * 0.9;
+}
+```
+
+```ts
+// test/discount.test.ts
+import { strictEqual } from 'node:assert';
+import { test } from 'node:test';
+import { applyDiscount } from '../src/discount.js';
+
+test('applies a 10% discount', () => {
+  strictEqual(applyDiscount(100), 90);
+});
+```
+
+The test passes, but checkout still calculates the total without calling
+`applyDiscount`. StopSlop reports:
+
+```text
+  1 orphan feature
+
+   orphan feature  `applyDiscount` is only used by the test `test/discount.test.ts`; connect it to production code, or remove it and its test if unneeded
+      src/discount.ts:1
+```
+
+If the discount belongs in checkout, connect it and keep the test. If the feature
+was abandoned, remove the unused function and its test.
+
 ## Start with one command
 
 Run without installing:

@@ -24,7 +24,7 @@ describe('rule help', () => {
       symbol: 'feature',
       line: 3,
       severity: 'warn',
-      message: '`feature` is dead in production — only the test `src/feature.test.ts` uses it; delete both',
+      message: '`feature` is only used by the test `src/feature.test.ts`; connect it to production code, or remove it and its test if unneeded',
     };
     const result = {
       root: '/workspace/project',

@@ -95,8 +95,8 @@ File is not reachable from any entry point.
 
 Function or class is used only by its own test.
 
-**Why it matters.** No production code calls it; one test is the only thing that imports it. That is a feature written together with its test and never wired in, and the green test makes it look finished.
+**Why it matters.** No production code calls it; one test is the only thing that imports it. This can be a feature written together with its test and never wired in, and the green test makes it look finished.
 
-**How to fix.** Delete the symbol and its test together: deleting only the source breaks the test, and deleting only the test leaves dead code. If the feature is meant to exist, wire it into the production code that needs it.
+**How to fix.** Check whether the feature is meant to exist. If so, wire it into the production code that needs it. Otherwise, remove the unused symbol and its test together: deleting only the source breaks the test, and deleting only the test leaves dead code.
 
 **Tune or disable:** `deadCode.orphans` in `stopslop.json`.

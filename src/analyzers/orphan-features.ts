@@ -3,18 +3,9 @@ import type { File } from 'knip/session';
 import type { Finding, OxcNode, ParsedFile } from '../types.js';
 import { isStoryPath, isTestPath } from '../discover.js';
 
-// Orphan features: a function no production code calls, kept alive by nothing
-// but a single test. The signature of a generated feature that was never wired
-// in — the model wrote the function and the test together and stopped there. See
-// IDEA_DEATH_TEST_CODE.md.
-//
-// Stronger than a plain unused export, which has an innocent explanation ready
-// ("forgot to delete it"). Here there is almost none: nobody writes a test for
-// code they never connected to anything.
-//
-// The finding names a pair to delete, source symbol and test, because deleting
-// one without the other either breaks the build or leaves a green test standing
-// over nothing.
+// Orphan features: a callable with a single test as its only consumer in the
+// analyzed graph. It may be an unfinished feature that needs wiring into
+// production, or unused code to remove along with its test.
 
 export interface OrphanOptions {
   root: string;
@@ -65,7 +56,7 @@ export function findOrphanFeatures(options: OrphanOptions): Finding[] {
         symbol: exported.identifier,
         line: exported.line,
         severity: 'warn',
-        message: `\`${exported.identifier}\` is dead in production — only the test \`${test}\` uses it; delete both`,
+        message: `\`${exported.identifier}\` is only used by the test \`${test}\`; connect it to production code, or remove it and its test if unneeded`,
         data: { test },
       });
     }

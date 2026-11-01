@@ -118,13 +118,13 @@ const RULES: Record<FindingKind, Omit<RuleHelp, 'helpUri'>> = {
   'orphan-feature': {
     summary: 'Function or class is used only by its own test',
     why:
-      'No production code calls it; one test is the only thing that imports it. That is a ' +
+      'No production code calls it; one test is the only thing that imports it. This can be a ' +
       'feature written together with its test and never wired in, and the green test makes it ' +
       'look finished.',
     fix:
-      'Delete the symbol and its test together: deleting only the source breaks the test, and ' +
-      'deleting only the test leaves dead code. If the feature is meant to exist, wire it into ' +
-      'the production code that needs it.',
+      'Check whether the feature is meant to exist. If so, wire it into the production code ' +
+      'that needs it. Otherwise, remove the unused symbol and its test together: deleting only ' +
+      'the source breaks the test, and deleting only the test leaves dead code.',
     config: 'deadCode.orphans',
   },
 };

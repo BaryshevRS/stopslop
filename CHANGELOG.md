@@ -4,7 +4,7 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-02)
 
 ### Fixed
 
@@ -12,6 +12,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   owners in cognitive-complexity checks. Inline route handlers were previously
   skipped when no enclosing named function owned them. Nested functions remain
   counted once, as part of their owner.
+- Recommend connecting an orphan feature to production when it is needed, or
+  removing it with its test when it is not. Add a verified example to the README.
 
 ### Changed
 

@@ -7,7 +7,7 @@
   "excludeFiles": ["CHANGELOG.md", "RELEASING.md"],
   "rules": [
     "StopSlop detects structural code patterns; it does not determine whether code was written by a human or AI.",
-    "Run StopSlop without installing it with `npx stopslop .`. It requires Node.js ^20.19.0 or >=22.12.0 and analyzes JavaScript, JSX, TypeScript and TSX.",
+    "Run StopSlop without installing it with `npx stopslop .`. It requires Node.js 22.13.0 or later and analyzes JavaScript, JSX, TypeScript and TSX.",
     "Exit code 0 means no unaccepted findings, 1 means findings were detected, and 2 means analysis or configuration failed.",
     "Adopt an existing repository with `--baseline .stopslop-baseline.json --update-baseline`, commit that file, then use the same `--baseline` option in CI to reject only new findings.",
     "A baseline changes the gate and reported findings but never lowers the full-repository slop score.",

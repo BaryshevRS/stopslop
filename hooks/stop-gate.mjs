@@ -80,7 +80,7 @@ function runStopslop(root, args) {
   const local = join(root, 'node_modules', 'stopslop', 'dist', 'cli.js');
   const [command, prefix] = existsSync(local)
     ? [process.execPath, [local]]
-    : ['npx', ['--yes', 'stopslop@1']];
+    : ['npx', ['--yes', 'stopslop@2']];
   const result = spawnSync(command, [...prefix, ...args], {
     cwd: root,
     encoding: 'utf8',

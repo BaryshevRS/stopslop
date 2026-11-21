@@ -19,7 +19,7 @@ npx stopslop .
 ```
 
 It runs locally against JavaScript and TypeScript. No account. No source-code
-upload.
+upload. Node.js 22.13 or later is required.
 
 ## What it catches
 
@@ -244,7 +244,7 @@ the project has one, and hands any new findings back with how to fix each kind.
 Legacy never blocks a turn, a turn that changed no source costs one
 `git status`, and the agent gets one nudge per turn: accepting a finding stays
 your decision. The hook runs the project's pinned `stopslop` from `node_modules`
-and falls back to `npx stopslop@1`.
+and falls back to `npx stopslop@2`.
 
 The hook also ships in the npm package, so a project that pins `stopslop` can
 commit it to its own agent settings and give it to every contributor; see

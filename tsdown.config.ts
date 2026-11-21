@@ -3,7 +3,7 @@ import { defineConfig } from 'tsdown';
 export default defineConfig({
   entry: ['src/index.ts', 'src/cli.ts'],
   format: ['esm'],
-  target: 'node20',
+  target: 'node22',
   dts: true,
   outExtensions: () => ({ js: '.js', dts: '.d.ts' }),
   // Public exports point at stable names (`dist/index.js` + `dist/index.d.ts`).

@@ -105,7 +105,7 @@ and hands the new findings back to the agent with each kind's fix, which the
 agent receives as its next instruction. It does not block on analysis errors,
 and it nudges once per turn, so a finding you decide to keep cannot loop the
 session. It runs the project's own `node_modules/stopslop` when installed,
-otherwise `npx stopslop@1`.
+otherwise `npx stopslop@2`.
 
 | Agent | Hook event | Hook answer |
 | --- | --- | --- |

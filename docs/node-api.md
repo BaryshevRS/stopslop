@@ -1,7 +1,7 @@
 # Node.js API
 
 StopSlop ships a typed ESM API for tools that need findings and metrics in
-memory instead of a CLI report. It requires Node.js `^20.19.0 || >=22.12.0`.
+memory instead of a CLI report. It requires Node.js `>=22.13.0`.
 
 ## Analyze with defaults
 

@@ -2,7 +2,7 @@
 
 > Static analysis and CI gating for structural AI code slop in JavaScript and TypeScript. StopSlop finds cognitive complexity, god classes and modules, duplicate code, dead code, orphan features, and responsibility boundaries. It reports code patterns, not authorship.
 
-Run without installing: `npx stopslop .`. Exit codes are `0` for a clear gate, `1` for detected findings, and `2` for an analysis error. Requires Node.js 20.19+ or 22.12+.
+Run without installing: `npx stopslop .`. Exit codes are `0` for a clear gate, `1` for detected findings, and `2` for an analysis error. Requires Node.js 22.13.0 or later.
 
 Dead-code settings live under `knip` in `stopslop.json` — a project's own `knip.json` or `package.json#knip` is never read. Nothing needs to be written up front: the run prints `config hints` from Knip naming the workspace or entry point that is missing, and dead code stays out of the score until they are resolved.
 

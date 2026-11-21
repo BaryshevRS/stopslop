@@ -4,6 +4,22 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/BaryshevRS/stopslop/compare/v1.2.1...v2.0.0) (2026-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* StopSlop now requires Node.js 22.13 or later. Node.js 20 and 22.12 are no longer supported.
+
+### Features
+
+* update Clone Alert and require Node 22.13 ([9106998](https://github.com/BaryshevRS/stopslop/commit/910699871a4fa14b309ddf7b185b6e581d15c727))
+
+
+### Bug Fixes
+
+* update analysis dependencies ([5ab6047](https://github.com/BaryshevRS/stopslop/commit/5ab6047f84ffc11e1d3243b123fc6b141c6e3839))
+
 ## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-02)
 
 ### Fixed

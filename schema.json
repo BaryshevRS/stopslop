@@ -436,6 +436,9 @@
         "includeEntryExports": {
           "$ref": "#/definitions/knip/definitions/includeEntryExports"
         },
+        "includeSubpathExports": {
+          "$ref": "#/definitions/knip/definitions/includeSubpathExports"
+        },
         "tags": {
           "title": "Exclude (-) or include (+) exports with the specified JSDoc/TSDoc tags",
           "examples": [
@@ -503,6 +506,9 @@
               "$ref": "#/definitions/knip/definitions/ruleValue"
             },
             "nsTypes": {
+              "$ref": "#/definitions/knip/definitions/ruleValue"
+            },
+            "subpaths": {
               "$ref": "#/definitions/knip/definitions/ruleValue"
             },
             "types": {
@@ -593,6 +599,10 @@
           "title": "Include entry files when reporting unused exports",
           "type": "boolean"
         },
+        "includeSubpathExports": {
+          "title": "Report unused subpaths in package.json#exports",
+          "type": "boolean"
+        },
         "ignoreExportsUsedInFile": {
           "title": "Ignore exports used in file",
           "examples": [
@@ -652,6 +662,7 @@
             "type": "string",
             "enum": [
               "files",
+              "subpaths",
               "dependencies",
               "devDependencies",
               "optionalPeerDependencies",
@@ -769,6 +780,9 @@
             },
             "includeEntryExports": {
               "$ref": "#/definitions/knip/definitions/includeEntryExports"
+            },
+            "includeSubpathExports": {
+              "$ref": "#/definitions/knip/definitions/includeSubpathExports"
             }
           }
         },
@@ -828,6 +842,10 @@
             },
             "ava": {
               "title": "ava plugin configuration (https://knip.dev/reference/plugins/ava)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "aws-cdk": {
+              "title": "aws-cdk plugin configuration (https://knip.dev/reference/plugins/aws-cdk)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "babel": {
@@ -926,6 +944,10 @@
               "title": "Drizzle plugin configuration (https://knip.dev/reference/plugins/drizzle)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "electron-builder": {
+              "title": "electron-builder plugin configuration (https://knip.dev/reference/plugins/electron-builder)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "electron-forge": {
               "title": "Electron Forge plugin configuration (https://knip.dev/reference/plugins/electron-forge)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -938,12 +960,28 @@
               "title": "eleventy plugin configuration (https://knip.dev/reference/plugins/eleventy)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "ember": {
+              "title": "ember plugin configuration (https://knip.dev/reference/plugins/ember)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "ember-template-lint": {
+              "title": "ember-template-lint plugin configuration (https://knip.dev/reference/plugins/ember-template-lint)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "env-cmd": {
+              "title": "env-cmd plugin configuration (https://knip.dev/reference/plugins/env-cmd)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "esbuild": {
               "title": "esbuild plugin configuration (https://knip.dev/reference/plugins/esbuild)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "eslint": {
               "title": "ESLint plugin configuration (https://knip.dev/reference/plugins/eslint)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "evalite": {
+              "title": "evalite plugin configuration (https://knip.dev/reference/plugins/evalite)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "eve": {
@@ -1070,6 +1108,10 @@
               "title": "lunaria plugin configuration (https://knip.dev/reference/plugins/lunaria)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "maestro": {
+              "title": "maestro plugin configuration (https://knip.dev/reference/plugins/maestro)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "markdownlint": {
               "title": "markdownlint plugin configuration (https://knip.dev/reference/plugins/markdownlint)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1096,6 +1138,10 @@
             },
             "metro": {
               "title": "metro plugin configuration (https://knip.dev/reference/plugins/metro)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "mikro-orm": {
+              "title": "mikro-orm plugin configuration (https://knip.dev/reference/plugins/mikro-orm)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "mise": {
@@ -1310,6 +1356,10 @@
               "title": "Remix plugin configuration (https://knip.dev/reference/plugins/remix)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
+            "retry-cli": {
+              "title": "retry-cli plugin configuration (https://knip.dev/reference/plugins/retry-cli)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
             "rolldown": {
               "title": "rolldown plugin configuration (https://knip.dev/reference/plugins/rolldown)",
               "$ref": "#/definitions/knip/definitions/plugin"
@@ -1324,6 +1374,10 @@
             },
             "rslib": {
               "title": "rslib plugin configuration (https://knip.dev/reference/plugins/rslib)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "rslint": {
+              "title": "rslint plugin configuration (https://knip.dev/reference/plugins/rslint)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "rspack": {
@@ -1368,6 +1422,10 @@
             },
             "starlight": {
               "title": "starlight plugin configuration (https://knip.dev/reference/plugins/starlight)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "start-server-and-test": {
+              "title": "start-server-and-test plugin configuration (https://knip.dev/reference/plugins/start-server-and-test)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "stencil": {
@@ -1440,6 +1498,10 @@
             },
             "travis": {
               "title": "travis plugin configuration (https://knip.dev/reference/plugins/travis)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "trigger-dev": {
+              "title": "trigger-dev plugin configuration (https://knip.dev/reference/plugins/trigger-dev)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "ts-node": {
@@ -1564,6 +1626,10 @@
             },
             "vue": {
               "title": "vue plugin configuration (https://knip.dev/reference/plugins/vue)",
+              "$ref": "#/definitions/knip/definitions/plugin"
+            },
+            "web-test-runner": {
+              "title": "Web Test Runner plugin configuration (https://knip.dev/reference/plugins/web-test-runner)",
               "$ref": "#/definitions/knip/definitions/plugin"
             },
             "webdriver-io": {

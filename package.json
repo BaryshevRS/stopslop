@@ -70,8 +70,8 @@
   },
   "dependencies": {
     "clone-alert": "^1.1.5",
-    "knip": "6.44.1",
-    "oxc-parser": "^0.156.0",
+    "knip": "6.47.0",
+    "oxc-parser": "^0.159.0",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {

@@ -4,6 +4,21 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/BaryshevRS/stopslop/compare/v1.2.1...v2.0.0) (2026-11-21)
+
+
+### Breaking changes
+
+- Require Node.js 22.13 or later. Node.js 20 and 22.12 are no longer supported.
+
+### Changed
+
+- Update Clone Alert from 1.1.5 to 2.0.0, Knip from 6.44.1 to 6.47.0,
+  and Oxc Parser from 0.156.0 to 0.159.0. These updates can change findings
+  and scores for the same codebase. Clone Alert 2.0 uses TypeScript 7.1 beta.
+- Refresh the configuration schema with Knip's new options and plugins.
+- Make the agent stop hook fall back to StopSlop 2 when no local version is installed.
+
 ## [1.2.1](https://github.com/BaryshevRS/stopslop/compare/v1.2.0...v1.2.1) (2026-11-02)
 
 ### Fixed

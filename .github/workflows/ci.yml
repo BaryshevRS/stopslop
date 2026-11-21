@@ -68,8 +68,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           package-manager-cache: false
-      - run: corepack enable
-      - run: corepack prepare pnpm@10.1.0 --activate
+      - uses: pnpm/action-setup@v6
       - run: pnpm install --frozen-lockfile
       - run: pnpm ci:check
 

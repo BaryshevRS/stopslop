@@ -4,6 +4,13 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/BaryshevRS/stopslop/compare/v2.0.0...v2.1.0) (2026-11-22)
+
+
+### Features
+
+* add function-level analysis and formatting checks ([4ddb402](https://github.com/BaryshevRS/stopslop/commit/4ddb40248403ff334a986a7f75570437150add46))
+
 ## [2.0.0](https://github.com/BaryshevRS/stopslop/compare/v1.2.1...v2.0.0) (2026-11-21)
 
 

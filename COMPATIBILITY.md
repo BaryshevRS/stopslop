@@ -1,6 +1,6 @@
 # Compatibility
 
-Last updated: 2.0.0 (2026-11-21)
+Last updated: 2.1.0 (2026-11-22)
 
 StopSlop follows Semantic Versioning. Stable surfaces change incompatibly only
 in a major release. Experimental surfaces may change in a minor release; such
@@ -20,10 +20,12 @@ calibration, and Knip or Clone Alert updates can change what a release reports
 for the same code; such changes are called out in the changelog. Pin the
 StopSlop version in CI when a gate must not move without a commit.
 
-Version 2.0.0 requires Node.js 22.13 or later, dropping support for Node.js 20
-and 22.12. It updates Clone Alert, Knip, and Oxc Parser; these engine updates
-can produce new findings or different scores for existing code. There are no
-new deprecations.
+Version 2.1.0 scores nested functions independently and adds a separate JSX
+complexity check. Existing baseline files remain valid, but changed finding
+identities and new JSX findings can cause a previously passing gate to fail.
+Review new findings before accepting them into a baseline. The experimental
+God Function check is disabled unless explicitly enabled. There are no new
+deprecations.
 
 ## Runtime support
 

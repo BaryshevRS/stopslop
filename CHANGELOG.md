@@ -4,6 +4,27 @@ All notable changes to StopSlop will be documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/BaryshevRS/stopslop/compare/v2.0.0...v2.1.0) (2026-11-22)
+
+
+### Added
+
+- Measure JSX cognitive complexity separately from function logic. Each nested
+  function and callback now receives its own complexity score.
+- Add an experimental, opt-in God Function check. Set `"godFunction": {}` in
+  `stopslop.json` to detect large closures and inspect extraction candidates.
+
+### Changed
+
+- Complexity findings and scores can change for existing code. When upgrading
+  from 2.0.0, existing baselines can report new findings because nested function
+  identities and JSX rule IDs have changed. Review the findings before updating
+  the baseline; CI gates may fail until they are addressed or accepted.
+
+### Fixed
+
+- Write complete JSON and SARIF reports to pipes before the CLI exits.
+
 ## [2.0.0](https://github.com/BaryshevRS/stopslop/compare/v1.2.1...v2.0.0) (2026-11-21)
 
 

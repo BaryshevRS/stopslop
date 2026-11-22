@@ -21,6 +21,7 @@ function score(input: {
   /** Whether Knip actually ran (default: it did). */
   deadCodeMeasured?: boolean;
   config?: ResolvedConfig;
+  referenceComplexityCount?: number;
 }) {
   return computeScore({
     findings: input.findings ?? [],
@@ -30,10 +31,19 @@ function score(input: {
       ...(input.deadCodeMeasured === false ? {} : { deadCodeMeasured: true }),
     },
     config: input.config ?? DEFAULT_CONFIG,
+    referenceComplexityCount: input.referenceComplexityCount,
   });
 }
 
 describe('slop score', () => {
+  it('counts each function once when it exceeds both complexity budgets', () => {
+    const result = score({
+      findings: [...findings('cognitive-complexity', 1), ...findings('jsx-cognitive-complexity', 2)],
+    });
+
+    expect(result.densities.complexity).toBe(0.2);
+  });
+
   it('is 0 on a clean repo', () => {
     const result = score({ duplicationRatio: 0 });
 
@@ -78,6 +88,7 @@ describe('slop score', () => {
       duplicates: { ...DEFAULT_CONFIG.duplicates, enabled: false },
       deadCode: { ...DEFAULT_CONFIG.deadCode, enabled: false },
     };
+
     // Complexity maxed out (40 findings / 10 KLOC = budget); with duplication and
     // dead code off, the remaining weights renormalize, so it is not diluted by
     // checks that never ran.
@@ -86,6 +97,7 @@ describe('slop score', () => {
       deadCodeMeasured: false,
       config,
     });
+
     const full = score({ findings: findings('cognitive-complexity', 40), duplicationRatio: 0 });
 
     expect(partial.densities.duplication).toBeUndefined();
@@ -111,10 +123,7 @@ describe('slop score', () => {
     const result = score({ duplicationRatio: 0.175 });
 
     expect(result.densities.duplication).toBe(0.175);
-    expect(result.contributions.duplication).toBeCloseTo(
-      100 * DEFAULT_CONFIG.score.weights.duplication * 0.5,
-      1,
-    );
+    expect(result.contributions.duplication).toBeCloseTo(100 * DEFAULT_CONFIG.score.weights.duplication * 0.5, 1);
   });
 
   it('charges nothing below a signal floor — baseline duplication is not slop', () => {
@@ -138,6 +147,19 @@ describe('slop score', () => {
 });
 
 describe('corpus percentile', () => {
+  it('uses the original signals for comparison and current findings for scoring', () => {
+    const original = score({ findings: findings('cognitive-complexity', 11), duplicationRatio: 0.13 });
+    const current = score({
+      findings: [...findings('cognitive-complexity', 16), ...findings('god-function', 2)],
+      duplicationRatio: 0.13,
+      referenceComplexityCount: 11,
+    });
+
+    expect(current.percentile).toBe(original.percentile);
+    expect(current.densities).toMatchObject({ god: 0.2, complexity: 1.6 });
+    expect(current.score).toBeGreaterThan(original.score);
+  });
+
   it('anchors a clean repo at the bottom and a maxed repo at the top', () => {
     const clean = score({ duplicationRatio: 0 });
     const maxed = score({
@@ -164,6 +186,7 @@ describe('corpus percentile', () => {
       findings: findings('cognitive-complexity', 11),
       duplicationRatio: 0.13,
     });
+
     expect(result.percentile).toBeGreaterThan(0);
     expect(result.percentile).toBeLessThan(90);
   });

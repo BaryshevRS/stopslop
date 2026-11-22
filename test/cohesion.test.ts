@@ -7,10 +7,12 @@ import type { OxcNode } from '../src/types.js';
 
 function mod(code: string) {
   const { file } = parseFile('t.ts', '/t.ts', code);
+
   return extractModule(file!, (n: OxcNode) => computeCognitiveComplexity(n));
 }
 function cls(code: string) {
   const { file } = parseFile('t.ts', '/t.ts', code);
+
   return extractClasses(file!, (n: OxcNode) => computeCognitiveComplexity(n));
 }
 
@@ -26,6 +28,7 @@ describe('module extraction & cohesion', () => {
       function e() { return se; }
       function f() { se = 1; }
     `;
+
     const unit = mod(code);
     const { clusters, hubs } = computeCohesion(unit.members, 0.5);
     expect(hubs).toEqual([]);
@@ -38,6 +41,7 @@ describe('module extraction & cohesion', () => {
       function main() { return helper(); }
       function lonely() { return 2; }
     `;
+
     const { clusters } = computeCohesion(mod(code).members, 0.5);
     // {helper, main} and {lonely}
     expect(clusters).toHaveLength(2);
@@ -50,6 +54,7 @@ describe('module extraction & cohesion', () => {
       function a() { return db.read(); }
       function b() { return db.write(); }
     `;
+
     const { clusters } = computeCohesion(mod(code).members, 0.5);
     expect(clusters).toHaveLength(2); // a and b independent — db is not a member
   });
@@ -72,6 +77,7 @@ describe('class cohesion — pseudo-connected monster', () => {
         flushLog() { this.state; this.logs = []; }
       }
     `;
+
     const unit = cls(code)[0]!;
     const { clusters, hubs, clustersBeforeHubs } = computeCohesion(unit.members, 0.5);
     expect(clustersBeforeHubs).toBe(1); // glued by this.state
@@ -87,6 +93,7 @@ describe('class cohesion — pseudo-connected monster', () => {
         loadB() { return this.http.get('b'); }
       }
     `;
+
     const unit = cls(code)[0]!;
     const { clusters } = computeCohesion(unit.members, 0.5);
     // http is a dependency → no edge; two independent methods
@@ -102,6 +109,7 @@ describe('class cohesion — pseudo-connected monster', () => {
         peek() { return this.items[this.items.length - 1]; }
       }
     `;
+
     const unit = cls(code)[0]!;
     const { clusters, hubs } = computeCohesion(unit.members, 0.5);
     // items has fan-in 3 of 3 methods = 100% → flagged as hub; but that is correct:

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_GOD_FUNCTION, DEFAULT_JSX_COMPLEXITY } from '../src/config.js';
 import { emitGenerated } from './emit-generated.js';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
@@ -12,12 +13,15 @@ const outputPath = resolve(projectRoot, 'schema.json');
 
 function rewriteKnipRefs(value: Json): Json {
   if (Array.isArray(value)) return value.map(rewriteKnipRefs);
+
   if (value === null || typeof value !== 'object') return value;
+
   return Object.fromEntries(
     Object.entries(value).map(([key, child]) => {
       if (key === '$ref' && typeof child === 'string' && child.startsWith('#/')) {
         return [key, `#/definitions/knip/${child.slice(2)}`];
       }
+
       return [key, rewriteKnipRefs(child)];
     }),
   );
@@ -37,10 +41,7 @@ const numberProperty = (description: string, defaultValue: number, minimum = 0):
 });
 
 const objectOrFalse = (properties: Record<string, Schema>): Schema => ({
-  anyOf: [
-    { const: false },
-    { type: 'object', additionalProperties: false, properties },
-  ],
+  anyOf: [{ const: false }, { type: 'object', additionalProperties: false, properties }],
 });
 
 const scoreSignals = (defaults: Record<string, number>): Schema => ({
@@ -71,7 +72,16 @@ const schema: Schema = {
     cognitiveComplexity: {
       anyOf: [
         { const: false },
-        numberProperty('Report functions strictly above this cognitive complexity.', 15),
+        numberProperty('Report functions strictly above this cognitive complexity outside JSX.', 15),
+      ],
+    },
+    jsxComplexity: {
+      anyOf: [
+        { const: false },
+        numberProperty(
+          'Report JSX renders strictly above this cognitive complexity.',
+          DEFAULT_JSX_COMPLEXITY.threshold,
+        ),
       ],
     },
     godModule: objectOrFalse({
@@ -88,6 +98,25 @@ const schema: Schema = {
       sizeMembers: numberProperty('Member threshold for the size gate.', 30),
       sizeComplexity: numberProperty('Complexity threshold for the size gate.', 200),
     }),
+    godFunction: {
+      description: 'Experimental; disabled by default. Set to an object to enable.',
+      ...objectOrFalse({
+        minMembers: numberProperty('Minimum local functions for the dispersion gate.', DEFAULT_GOD_FUNCTION.minMembers),
+        minClusters: numberProperty(
+          'Minimum extraction candidates for the dispersion gate.',
+          DEFAULT_GOD_FUNCTION.minClusters,
+          2,
+        ),
+        sizeMembers: numberProperty(
+          'Local function count that triggers the size gate.',
+          DEFAULT_GOD_FUNCTION.sizeMembers,
+        ),
+        sizeComplexity: numberProperty(
+          'Total nested complexity that triggers the size gate.',
+          DEFAULT_GOD_FUNCTION.sizeComplexity,
+        ),
+      }),
+    },
     multipleExportedClasses: objectOrFalse({
       maxPerFile: numberProperty('Maximum exported classes allowed in one file.', 1),
     }),
@@ -101,10 +130,7 @@ const schema: Schema = {
       exports: booleanProperty('Report unused exports and exported types.', true),
       dependencies: booleanProperty('Report unused dependencies and devDependencies.', true),
       files: booleanProperty('Report files unreachable from an entry point.', true),
-      orphans: booleanProperty(
-        'Report functions kept alive by nothing but their own paired test.',
-        true,
-      ),
+      orphans: booleanProperty('Report functions kept alive by nothing but their own paired test.', true),
       production: booleanProperty('Analyze production code only.', false),
     }),
     knip: {

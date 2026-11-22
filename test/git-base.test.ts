@@ -10,14 +10,15 @@ const execFileAsync = promisify(execFile);
 
 async function git(cwd: string, ...args: string[]): Promise<string> {
   const { stdout } = await execFileAsync('git', ['-C', cwd, ...args], { encoding: 'utf8' });
+
   return stdout;
 }
 
 function worktreePaths(porcelain: string): string[] {
   return porcelain
     .split('\n')
-    .filter((line) => line.startsWith('worktree '))
-    .map((line) => line.slice('worktree '.length));
+    .filter(line => line.startsWith('worktree '))
+    .map(line => line.slice('worktree '.length));
 }
 
 it('suppresses legacy base findings without disturbing the current worktree', async () => {
@@ -50,6 +51,7 @@ it('suppresses legacy base findings without disturbing the current worktree', as
       name: 'fixture-token-analyzer',
       async analyzeProject(ctx) {
         const source = await readFile(join(ctx.root, 'sample.ts'), 'utf8');
+
         return source
           .trimEnd()
           .split('\n')
@@ -90,6 +92,7 @@ it('suppresses legacy base findings without disturbing the current worktree', as
       try {
         const originalPaths = new Set(worktreePaths(initialWorktrees));
         const currentWorktrees = await git(root, 'worktree', 'list', '--porcelain');
+
         for (const path of worktreePaths(currentWorktrees)) {
           if (!originalPaths.has(path)) await git(root, 'worktree', 'remove', '--force', path);
         }
@@ -97,6 +100,7 @@ it('suppresses legacy base findings without disturbing the current worktree', as
         // Preserve the primary assertion failure while still attempting cleanup.
       }
     }
+
     await rm(root, { recursive: true, force: true });
   }
 });

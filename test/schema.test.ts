@@ -12,6 +12,8 @@ type JsonSchema = {
   allOf?: JsonSchema[];
   anyOf?: JsonSchema[];
   oneOf?: JsonSchema[];
+  const?: unknown;
+  minimum?: number;
   type?: string | string[];
   properties?: Record<string, JsonSchema>;
   required?: string[];
@@ -28,27 +30,47 @@ function schemaAt(root: JsonSchema, ref: string): JsonSchema {
 // Keeping the assertion local avoids a runtime dependency solely for schema tests.
 function validates(root: JsonSchema, schema: JsonSchema, value: unknown): boolean {
   if (schema.$ref) return validates(root, schemaAt(root, schema.$ref), value);
-  if (schema.allOf && !schema.allOf.every((branch) => validates(root, branch, value))) return false;
-  if (schema.anyOf) return schema.anyOf.some((branch) => validates(root, branch, value));
-  if (schema.oneOf) return schema.oneOf.filter((branch) => validates(root, branch, value)).length === 1;
+
+  if (schema.allOf && !schema.allOf.every(branch => validates(root, branch, value))) return false;
+
+  if (schema.anyOf) return schema.anyOf.some(branch => validates(root, branch, value));
+
+  if (schema.oneOf) return schema.oneOf.filter(branch => validates(root, branch, value)).length === 1;
+
+  if ('const' in schema && value !== schema.const) return false;
+
+  if (typeof value === 'number' && schema.minimum !== undefined && value < schema.minimum) return false;
 
   const types = schema.type ? (Array.isArray(schema.type) ? schema.type : [schema.type]) : [];
+
   if (types.length > 0) {
     const isNull = value === null;
     const actual = Array.isArray(value) ? 'array' : isNull ? 'null' : typeof value;
+
     if (!types.includes(actual)) return false;
   }
 
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return true;
+
   const object = value as Record<string, unknown>;
-  if (schema.required?.some((key) => !(key in object))) return false;
+
+  if (schema.required?.some(key => !(key in object))) return false;
 
   for (const [key, child] of Object.entries(object)) {
     const property = schema.properties?.[key];
+
     if (property && !validates(root, property, child)) return false;
+
     if (!property && schema.additionalProperties === false) return false;
-    if (!property && typeof schema.additionalProperties === 'object' && !validates(root, schema.additionalProperties, child)) return false;
+
+    if (
+      !property &&
+      typeof schema.additionalProperties === 'object' &&
+      !validates(root, schema.additionalProperties, child)
+    )
+      return false;
   }
+
   return true;
 }
 
@@ -60,6 +82,7 @@ describe('published config schema', () => {
     const config = {
       $schema: 'https://example.test/stopslop/schema.json',
       cognitiveComplexity: 20,
+      jsxComplexity: 15,
       godClass: { minMembers: 15 },
       deadCode: { exports: false },
       knip: {
@@ -76,11 +99,14 @@ describe('published config schema', () => {
 
     expect(validates(schema, schema, { cognitiveComplexity: 20, misspelledGate: true })).toBe(false);
     expect(validates(schema, schema, { knip: { entry: 42 } })).toBe(false);
+    expect(validates(schema, schema, { jsxComplexity: '15' })).toBe(false);
+    expect(validates(schema, schema, { jsxComplexity: -1 })).toBe(false);
   });
 
   it('is included in npm pack output', () => {
     const npmCache = mkdtempSync(join(tmpdir(), 'stopslop-npm-cache-'));
     let packed: Array<{ files: Array<{ path: string }> }>;
+
     try {
       const env: NodeJS.ProcessEnv = { ...process.env, npm_config_cache: npmCache };
       delete env.npm_config_verify_deps_before_run;
@@ -96,6 +122,6 @@ describe('published config schema', () => {
     }
 
     expect(packed).toHaveLength(1);
-    expect(packed[0]!.files.map((file) => file.path)).toContain('schema.json');
+    expect(packed[0]!.files.map(file => file.path)).toContain('schema.json');
   }, 15_000);
 });

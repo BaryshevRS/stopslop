@@ -4,8 +4,10 @@ import type { KnipConfiguration } from 'knip';
 
 export type FindingKind =
   | 'cognitive-complexity'
+  | 'jsx-cognitive-complexity'
   | 'god-module'
   | 'god-class'
+  | 'god-function'
   | 'multiple-exported-classes'
   // Stage 2 — project-wide, produced by the integrated engines.
   | 'duplicate-code' // Clone Alert
@@ -88,6 +90,8 @@ export interface Analyzer {
 
 export interface AnalyzeContext {
   config: ResolvedConfig;
+  /** Count scored by the original rule for comparison with the published corpus. */
+  referenceComplexity?: { count: number };
 }
 
 /**
@@ -153,6 +157,15 @@ export interface CognitiveGate {
   threshold: number;
 }
 
+export interface GodFunctionGate {
+  enabled: boolean;
+  minMembers: number;
+  minClusters: number;
+  sizeMembers: number;
+  /** Sum of the independent scores of the nested functions. */
+  sizeComplexity: number;
+}
+
 export interface MultiClassGate {
   enabled: boolean;
   /** Files with more than this many exported classes are reported. */
@@ -213,8 +226,10 @@ export interface ScoreSignals {
 
 export interface ResolvedConfig {
   cognitiveComplexity: CognitiveGate;
+  jsxComplexity?: CognitiveGate;
   godModule: GodGate;
   godClass: GodGate;
+  godFunction?: GodFunctionGate;
   multipleExportedClasses: MultiClassGate;
   duplicates: DuplicatesGate;
   deadCode: DeadCodeGate;

@@ -12,6 +12,7 @@ function fixture(): string {
   fixtures.push(root);
   mkdirSync(join(root, 'src'), { recursive: true });
   writeFileSync(join(root, 'src', 'entry.ts'), 'export const entry = true;\n');
+
   return root;
 }
 
@@ -24,31 +25,32 @@ afterEach(() => {
 });
 
 describe('stopslop Knip options', () => {
-  it.each(['package.json', 'pnpm-workspace.yaml'] as const)(
-    'keeps catalog sources in %s readable after bootstrap cleanup',
-    async (catalogFile) => {
-      const root = fixture();
-      write(
-        root,
-        'package.json',
-        JSON.stringify({
-          name: 'fixture',
-          ...(catalogFile === 'package.json' ? { catalog: { 'unused-package': '^1.0.0' } } : {}),
-        }),
-      );
-      if (catalogFile === 'pnpm-workspace.yaml') {
-        write(root, catalogFile, 'catalog:\n  unused-package: ^1.0.0\n');
-      }
+  it.each([
+    'package.json',
+    'pnpm-workspace.yaml',
+  ] as const)('keeps catalog sources in %s readable after bootstrap cleanup', async catalogFile => {
+    const root = fixture();
+    write(
+      root,
+      'package.json',
+      JSON.stringify({
+        name: 'fixture',
+        ...(catalogFile === 'package.json' ? { catalog: { 'unused-package': '^1.0.0' } } : {}),
+      }),
+    );
 
-      const options = await createKnipOptions(root, {
-        knip: { entry: ['src/entry.ts'], project: ['src/**/*.ts'] },
-      });
+    if (catalogFile === 'pnpm-workspace.yaml') {
+      write(root, catalogFile, 'catalog:\n  unused-package: ^1.0.0\n');
+    }
 
-      expect(options.catalog[0]?.filePath).toBe(join(root, catalogFile).replaceAll('\\', '/'));
-      const session = await createSession(options);
-      expect(Object.keys(session.getResults().issues.catalog)).toContain(catalogFile);
-    },
-  );
+    const options = await createKnipOptions(root, {
+      knip: { entry: ['src/entry.ts'], project: ['src/**/*.ts'] },
+    });
+
+    expect(options.catalog[0]?.filePath).toBe(join(root, catalogFile).replaceAll('\\', '/'));
+    const session = await createSession(options);
+    expect(Object.keys(session.getResults().issues.catalog)).toContain(catalogFile);
+  });
 
   it('uses only stopslop.knip, never ambient Knip configuration sources', async () => {
     const root = fixture();
@@ -85,9 +87,7 @@ describe('stopslop Knip options', () => {
     write(root, 'package.json', JSON.stringify({ name: 'fixture' }));
     write(root, 'knip.config.js', "throw new Error('ambient Knip config executed');\n");
 
-    await expect(
-      createKnipOptions(root, { knip: { entry: ['src/entry.ts'] } }),
-    ).resolves.toMatchObject({
+    await expect(createKnipOptions(root, { knip: { entry: ['src/entry.ts'] } })).resolves.toMatchObject({
       cwd: root.replaceAll('\\', '/'),
       parsedConfig: { entry: ['src/entry.ts'] },
     });
@@ -106,11 +106,13 @@ describe('stopslop Knip options', () => {
     const overridden = await createKnipOptions(root, {
       knip: { ignoreExportsUsedInFile: false },
     });
+
     expect(overridden.parsedConfig.ignoreExportsUsedInFile).toBe(false);
 
     const granular = await createKnipOptions(root, {
       knip: { ignoreExportsUsedInFile: { interface: true } },
     });
+
     expect(granular.parsedConfig.ignoreExportsUsedInFile).toEqual({ interface: true });
   });
 

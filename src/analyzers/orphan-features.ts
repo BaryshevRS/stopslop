@@ -20,6 +20,7 @@ export function findOrphanFeatures(options: OrphanOptions): Finding[] {
 
   for (const file of options.files) {
     let described: File | undefined;
+
     try {
       // Knip stores Windows graph keys as POSIX paths. Its session API accepts
       // absolute paths but does not normalize an already-absolute input.
@@ -27,11 +28,14 @@ export function findOrphanFeatures(options: OrphanOptions): Finding[] {
     } catch {
       continue; // a file Knip cannot describe simply yields no candidates
     }
+
     if (!described) continue;
+
     const callables = callableDeclarations(file.program);
 
     for (const exported of described.exports) {
       if (!callables.has(exported.identifier)) continue;
+
       const consumers = consumersOf(exported.importLocations, options.root, file.relPath);
 
       // Exactly one importer is the whole signal. None means ordinary dead code,
@@ -46,8 +50,11 @@ export function findOrphanFeatures(options: OrphanOptions): Finding[] {
       // Both orphans found while validating this were of exactly that shape,
       // and dropping the requirement added no findings anywhere else.
       if (consumers.length !== 1) continue;
+
       const test = consumers[0]!;
+
       if (isStoryPath(test) || !isTestPath(test)) continue;
+
       if (isUsedWithinFile(file.source, exported.identifier)) continue;
 
       findings.push({
@@ -86,42 +93,49 @@ function callableDeclarations(program: OxcNode): Set<string> {
     // `export function f() {}` wraps the declaration; `function f() {}` with a
     // separate `export { f }` does not. Both are the same declaration to us.
     const node = asNode(statement.declaration) ?? statement;
+
     if (node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') {
       const id = asNode(node.id);
+
       if (typeof id?.name === 'string') names.add(id.name);
+
       continue;
     }
+
     if (node.type !== 'VariableDeclaration') continue;
+
     const declarations = Array.isArray(node.declarations) ? (node.declarations as OxcNode[]) : [];
+
     for (const declarator of declarations) {
       const init = asNode(declarator.init);
+
       if (init?.type !== 'ArrowFunctionExpression' && init?.type !== 'FunctionExpression') continue;
+
       const id = asNode(declarator.id);
+
       if (typeof id?.name === 'string') names.add(id.name);
     }
   }
+
   return names;
 }
 
 function asNode(value: unknown): OxcNode | undefined {
-  return typeof value === 'object' && value !== null && 'type' in value
-    ? (value as OxcNode)
-    : undefined;
+  return typeof value === 'object' && value !== null && 'type' in value ? (value as OxcNode) : undefined;
 }
 
 /** Distinct importing files, relative and POSIX, excluding the file itself. */
-function consumersOf(
-  locations: readonly { filePath: string }[],
-  root: string,
-  self: string,
-): string[] {
+function consumersOf(locations: readonly { filePath: string }[], root: string, self: string): string[] {
   const seen = new Set<string>();
+
   for (const location of locations) {
     const rel = relative(root, location.filePath).split(sep).join('/');
+
     // An importer outside the analysis root is production code we cannot see;
     // counting it keeps the export off the list, which is the safe direction.
     if (rel !== self) seen.add(rel);
   }
+
   return [...seen];
 }
 
@@ -141,8 +155,10 @@ function consumersOf(
 function isUsedWithinFile(source: string, identifier: string): boolean {
   const pattern = new RegExp(`(?<![\\w$])${identifier.replace(/\$/g, '\\$')}(?![\\w$])`, 'g');
   let matches = 0;
+
   while (pattern.exec(source) !== null) {
     if (++matches > 1) return true; // the declaration is the first match
   }
+
   return false;
 }

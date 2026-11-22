@@ -15,11 +15,21 @@ disables it.
 
 Function is harder to follow than the threshold allows.
 
-**Why it matters.** Cognitive complexity counts what a reader has to hold in mind to follow a function: branches, loops, nesting, and boolean chains (SonarSource specification). Above the threshold a function is hard to review and easy to break, and it keeps growing the same way: each new case lands beside the existing ones instead of in a place of its own.
+**Why it matters.** Cognitive complexity counts what a reader has to hold in mind to follow a function: branches, loops, nesting, and boolean chains (SonarSource specification). This rule measures the function body outside JSX. Above the threshold a function is hard to review and easy to break, and it keeps growing the same way: each new case lands beside the existing ones instead of in a place of its own.
 
 **How to fix.** Return early instead of nesting, and move each independent decision into a function whose name says what it decides. Replace a long if/else or switch over one value with a lookup table. Cutting the body into arbitrary part1/part2 helpers moves the complexity without removing it.
 
 **Tune or disable:** `cognitiveComplexity` in `stopslop.json`.
+
+## jsx-cognitive-complexity
+
+JSX render exceeds the cognitive complexity threshold.
+
+**Why it matters.** Conditions, nested ternaries, and boolean chains inside JSX make it harder to follow what a view renders. The rule measures JSX owned by one function. Each callback is scored independently.
+
+**How to fix.** Extract a self-contained view or simplify the conditions that select what it displays. Run the check again on the original render and the extracted views. Each render should fit the JSX budget.
+
+**Tune or disable:** `jsxComplexity` in `stopslop.json`.
 
 ## god-module
 
@@ -40,6 +50,16 @@ Class mixes unrelated responsibilities or has outgrown one unit.
 **How to fix.** Extract each responsibility group into its own class or set of functions, and let the original delegate to them or disappear; `--details` and the JSON report list the groups. A size-axis finding has no clean boundaries, so split it by responsibility by hand.
 
 **Tune or disable:** `godClass` in `stopslop.json`.
+
+## god-function
+
+Function contains several extraction candidates or a large amount of nested logic.
+
+**Why it matters.** Local functions can be easy to follow on their own while their enclosing scope mixes several jobs or contains a large amount of nested logic. The dependency graph connects local functions to the bindings they capture and gives widely shared dependencies less weight (SArF).
+
+**How to fix.** Use `--details` or JSON to inspect each candidate and its external dependencies. Extract a cohesive group into a function, module, or custom Hook and make the remaining dependencies explicit. A size finding with no group calls for manual review.
+
+**Tune or disable:** `godFunction` in `stopslop.json`.
 
 ## multiple-exported-classes
 

@@ -1,9 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const packageManifest = JSON.parse(
-  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
-) as {
+const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   name?: string;
   version?: string;
   description?: string;
@@ -16,9 +14,7 @@ const packageManifest = JSON.parse(
   devDependencies?: Record<string, string>;
 };
 
-const context7 = JSON.parse(
-  readFileSync(new URL('../context7.json', import.meta.url), 'utf8'),
-) as {
+const context7 = JSON.parse(readFileSync(new URL('../context7.json', import.meta.url), 'utf8')) as {
   $schema?: string;
   projectTitle?: string;
   description?: string;
@@ -34,9 +30,7 @@ const agentManifests = ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.jso
 describe('published package manifest', () => {
   it('pins Knip to exactly version 6.47.0', () => {
     expect(packageManifest.name).toBe('stopslop');
-    expect(packageManifest.dependencies?.knip ?? packageManifest.devDependencies?.knip).toBe(
-      '6.47.0',
-    );
+    expect(packageManifest.dependencies?.knip ?? packageManifest.devDependencies?.knip).toBe('6.47.0');
   });
 
   it('publishes complete registry discovery metadata', () => {
@@ -68,18 +62,19 @@ describe('published package manifest', () => {
     expect(context7.description?.length).toBeLessThanOrEqual(200);
     expect(context7.folders).toEqual(['docs']);
     expect(context7.rules?.length).toBeGreaterThanOrEqual(8);
-    expect(context7.rules?.every((rule) => rule.length <= 255)).toBe(true);
+    expect(context7.rules?.every(rule => rule.length <= 255)).toBe(true);
     expect(llmsIndex).toContain('/docs/ci-and-automation.md');
     expect(llmsIndex).toContain('/docs/node-api.md');
     expect(llmsIndex).toContain('/docs/rules.md');
   });
 
-  it.each(agentManifests)('releases %s with the package', (path) => {
+  it.each(agentManifests)('releases %s with the package', path => {
     // A plugin version pins users until it changes; Release Please bumps them all.
     const manifest = JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')) as {
       name?: string;
       version?: string;
     };
+
     expect(manifest.name).toBe(packageManifest.name);
     expect(manifest.version).toBe(packageManifest.version);
   });

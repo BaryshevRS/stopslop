@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { parseFile } from '../src/parse.js';
-import { collectFunctions, computeCognitiveComplexity, cognitiveComplexityAnalyzer } from '../src/analyzers/cognitive-complexity.js';
+import {
+  collectFunctions,
+  computeCognitiveComplexity,
+  cognitiveComplexityAnalyzer,
+} from '../src/analyzers/cognitive-complexity.js';
 import { resolveConfig } from '../src/config.js';
 import type { OxcNode } from '../src/types.js';
 
 function scoreOf(code: string, fnName?: string): number {
   const { file } = parseFile('t.ts', '/t.ts', code);
+
   if (!file) throw new Error('parse failed');
+
   const fns = collectFunctions(file);
-  const fn = fnName ? fns.find((f) => f.name === fnName) : fns[0];
+  const fn = fnName ? fns.find(f => f.name === fnName) : fns[0];
+
   if (!fn) throw new Error(`function ${fnName ?? '<first>'} not found`);
+
   return fn.complexity;
 }
 
@@ -28,6 +36,7 @@ describe('cognitive complexity — white paper examples', () => {
         }
         return total;
       }`;
+
     expect(scoreOf(code)).toBe(7);
   });
 
@@ -40,6 +49,7 @@ describe('cognitive complexity — white paper examples', () => {
           default: return "lots";
         }
       }`;
+
     expect(scoreOf(code)).toBe(1);
   });
 });
@@ -58,6 +68,7 @@ describe('cognitive complexity — structural rules', () => {
       else if (b) {}
       else { if (c) {} }
     }`;
+
     expect(scoreOf(code)).toBe(5);
   });
 
@@ -79,9 +90,10 @@ describe('cognitive complexity — structural rules', () => {
     expect(scoreOf(`function f() { return a ? (b ? 1 : 2) : 3; }`)).toBe(3);
   });
 
-  it('nested function raises nesting but adds no increment itself', () => {
-    // arrow nests body to 1; inner if = +1+1 = 2
-    expect(scoreOf(`function f() { return () => { if (x) {} }; }`)).toBe(2);
+  it('starts a nested function at its own nesting level', () => {
+    const code = `function f() { if (ready) { return () => { if (x) {} }; } }`;
+    expect(scoreOf(code, 'f')).toBe(1);
+    expect(scoreOf(code, 'f.<anonymous>')).toBe(1);
   });
 
   it('plain sequential statements = 0', () => {
@@ -93,6 +105,7 @@ describe('cognitive complexity — structural rules', () => {
     const code = `function f() {
       try { g(); } catch (e) { if (x) {} } finally { h(); }
     }`;
+
     expect(scoreOf(code)).toBe(3);
   });
 });
@@ -100,32 +113,39 @@ describe('cognitive complexity — structural rules', () => {
 describe('collectFunctions — naming & granularity', () => {
   const nestedBranches = 'if (a) { if (b) { if (c) { if (d) { if (e) { if (f) {} } } } } }';
 
-  it.each(['(req, res) =>', 'async (req, res) =>', 'function (req, res)'])(
-    'reports inline route handlers written as %s',
-    (signature) => {
-      const source = `app.get('/users', ${signature} { ${nestedBranches} });`;
-      const { file } = parseFile('routes.ts', '/routes.ts', source);
-      const findings = cognitiveComplexityAnalyzer().analyzeFile!(file!, {
-        config: resolveConfig({}),
-      });
+  it.each([
+    '(req, res) =>',
+    'async (req, res) =>',
+    'function (req, res)',
+  ])('reports inline route handlers written as %s', signature => {
+    const source = `app.get('/users', ${signature} { ${nestedBranches} });`;
+    const { file } = parseFile('routes.ts', '/routes.ts', source);
+    const findings = cognitiveComplexityAnalyzer().analyzeFile!(file!, {
+      config: resolveConfig({}),
+    });
 
-      expect(findings).toMatchObject([{
+    expect(findings).toMatchObject([
+      {
         kind: 'cognitive-complexity',
         file: 'routes.ts',
         symbol: 'get("/users") callback',
         line: 1,
         data: { complexity: 21, threshold: 15 },
-      }]);
-      expect(scoreOf(`const handler = ${signature} { ${nestedBranches} };`)).toBe(21);
-    },
-  );
+      },
+    ]);
+    expect(scoreOf(`const handler = ${signature} { ${nestedBranches} };`)).toBe(21);
+  });
 
   it('collects generic callbacks, chained routes, and each middleware separately', () => {
-    const { file } = parseFile('routes.ts', '/routes.ts', `
+    const { file } = parseFile(
+      'routes.ts',
+      '/routes.ts',
+      `
       emitter.on('message', () => { if (a) {} });
       app.route('/users').get(() => { if (a) {} }, () => { if (a) { if (b) {} } });
       app.post('/users', () => {});
-    `);
+    `,
+    );
 
     expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
       { name: 'on("message") callback', complexity: 1 },
@@ -138,7 +158,7 @@ describe('collectFunctions — naming & granularity', () => {
   it.each([
     'export default function () { if (a) {} }',
     'export default () => { if (a) {} };',
-  ])('collects anonymous default exports: %s', (source) => {
+  ])('collects anonymous default exports: %s', source => {
     const { file } = parseFile('t.ts', '/t.ts', source);
 
     expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
@@ -146,23 +166,33 @@ describe('collectFunctions — naming & granularity', () => {
     ]);
   });
 
-  it('folds nested functions into an anonymous owner exactly once', () => {
-    const { file } = parseFile('t.ts', '/t.ts', `
+  it('qualifies an inner callback with its anonymous owner', () => {
+    const { file } = parseFile(
+      't.ts',
+      '/t.ts',
+      `
       subscribe(() => { values.forEach(value => { if (value) {} }); });
-    `);
+    `,
+    );
 
     expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
-      { name: 'subscribe callback', complexity: 2 },
+      { name: 'subscribe callback', complexity: 0 },
+      { name: 'subscribe callback.forEach callback', complexity: 1 },
     ]);
   });
 
-  it('keeps callbacks inside a named owner folded into that owner', () => {
-    const { file } = parseFile('t.ts', '/t.ts', `
+  it('reports a callback inside a named owner separately', () => {
+    const { file } = parseFile(
+      't.ts',
+      '/t.ts',
+      `
       function setup(app) { app.get('/users', () => { if (a) {} }); }
-    `);
+    `,
+    );
 
     expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
-      { name: 'setup', complexity: 2 },
+      { name: 'setup', complexity: 0 },
+      { name: 'setup.get("/users") callback', complexity: 1 },
     ]);
   });
 
@@ -180,21 +210,41 @@ describe('collectFunctions — naming & granularity', () => {
     expect(summarize(moved!)).toEqual(summarize(file!));
   });
 
-  it('names class methods as Class.method and folds nested funcs', () => {
+  it('qualifies a callback inside a class method', () => {
     const code = `
       class A {
         run() {
           [1,2].forEach(x => { if (x) {} });
         }
       }`;
+
     const { file } = parseFile('t.ts', '/t.ts', code);
     const fns = collectFunctions(file!);
-    const run = fns.find((f) => f.name === 'A.run');
-    expect(run).toBeTruthy();
-    // the forEach arrow is folded in: nested → if at nesting 1 = 2
-    expect(run!.complexity).toBe(2);
-    // the nested arrow is NOT reported separately
-    expect(fns).toHaveLength(1);
+    expect(fns.map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'A.run', complexity: 0 },
+      { name: 'A.run.forEach callback', complexity: 1 },
+    ]);
+    expect(computeCognitiveComplexity(fns[0]!.node, true)).toBe(2);
+  });
+
+  it('counts JSX conditionals and explicitly names inline handlers and React callbacks', () => {
+    const { file } = parseFile(
+      'view.tsx',
+      '/view.tsx',
+      `
+      import { useCallback as memo } from 'react';
+      function View() {
+        const run = memo(() => { if (busy) cancel(); }, []);
+        return ready ? <button onClick={() => { if (allowed) run(); }} /> : null;
+      }
+    `,
+    );
+
+    expect(collectFunctions(file!).map(({ name, complexity }) => ({ name, complexity }))).toEqual([
+      { name: 'View', complexity: 1 },
+      { name: 'View.run', complexity: 1 },
+      { name: 'View.onClick callback', complexity: 1 },
+    ]);
   });
 
   it('names arrow consts', () => {
@@ -211,5 +261,69 @@ describe('computeCognitiveComplexity primitive', () => {
     const { file } = parseFile('t.ts', '/t.ts', `function f(){ if(a){} }`);
     const fn = (file!.program as OxcNode).body as unknown as OxcNode[];
     expect(computeCognitiveComplexity(fn[0]!)).toBe(1);
+  });
+});
+
+describe('separate logic and JSX budgets', () => {
+  function component(name: string, body: number, jsx: number): string {
+    const logic = 'if (ready) run();\n'.repeat(body);
+    const markup = '{ready && <span />}\n'.repeat(jsx);
+
+    return `function ${name}() {\n${logic}return <>\n${markup}</>;\n}`;
+  }
+
+  function analyze(source: string, config?: Parameters<typeof resolveConfig>[0]) {
+    const { file } = parseFile('view.tsx', '/view.tsx', source);
+
+    return cognitiveComplexityAnalyzer().analyzeFile!(file!, { config: resolveConfig(config) });
+  }
+
+  it('gates each score separately at 15 and gives simultaneous findings distinct identities', () => {
+    const findings = analyze(
+      [
+        component('AtLimit', 15, 15),
+        component('LogicOnly', 16, 15),
+        component('JsxOnly', 15, 16),
+        component('Both', 16, 16),
+      ].join('\n'),
+    );
+
+    expect(findings.map(({ kind, symbol, data }) => ({ kind, symbol, data }))).toEqual([
+      { kind: 'cognitive-complexity', symbol: 'LogicOnly', data: { complexity: 16, threshold: 15 } },
+      { kind: 'jsx-cognitive-complexity', symbol: 'JsxOnly', data: { complexity: 16, threshold: 15 } },
+      { kind: 'cognitive-complexity', symbol: 'Both', data: { complexity: 16, threshold: 15 } },
+      { kind: 'jsx-cognitive-complexity', symbol: 'Both', data: { complexity: 16, threshold: 15 } },
+    ]);
+    expect(findings[3]!.line).toBeGreaterThan(findings[2]!.line);
+  });
+
+  it('checks an inline callback on its own and keeps surrounding nesting in the JSX score', () => {
+    const findings = analyze(
+      `
+      function View() {
+        if (ready) return <>
+          {premium ? <strong /> : <span />}
+          <button onClick={() => { if (allowed) run(); }} />
+        </>;
+        return <span />;
+      }
+    `,
+      { cognitiveComplexity: 0, jsxComplexity: 0 },
+    );
+
+    expect(findings.map(({ kind, symbol, line, data }) => ({ kind, symbol, line, data }))).toEqual([
+      { kind: 'cognitive-complexity', symbol: 'View', line: 2, data: { complexity: 1, threshold: 0 } },
+      { kind: 'jsx-cognitive-complexity', symbol: 'View', line: 3, data: { complexity: 2, threshold: 0 } },
+      { kind: 'cognitive-complexity', symbol: 'View.onClick callback', line: 5, data: { complexity: 1, threshold: 0 } },
+    ]);
+  });
+
+  it('allows either check to be disabled independently', () => {
+    const source = component('View', 16, 16);
+    expect(analyze(source, { cognitiveComplexity: false, jsxComplexity: 15 }).map(f => f.kind)).toEqual([
+      'jsx-cognitive-complexity',
+    ]);
+    expect(analyze(source, { jsxComplexity: false }).map(f => f.kind)).toEqual(['cognitive-complexity']);
+    expect(analyze(source, { cognitiveComplexity: false })).toEqual([]);
   });
 });

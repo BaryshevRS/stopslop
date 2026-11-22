@@ -1,8 +1,10 @@
 {
   "$schema": "https://unpkg.com/stopslop/schema.json",
   "cognitiveComplexity": 15,
+  "jsxComplexity": 15,
   "godModule": { "minMembers": 15, "minClusters": 3, "minComplexity": 150, "sizeMembers": 37, "sizeComplexity": 350 },
   "godClass": { "minMembers": 12, "minClusters": 3, "minComplexity": 90, "sizeMembers": 30, "sizeComplexity": 200 },
+  "godFunction": { "minMembers": 12, "minClusters": 2, "sizeMembers": 30, "sizeComplexity": 90 },
   "multipleExportedClasses": { "maxPerFile": 1 },
   "duplicates": { "minTokens": 50, "minLines": 5, "ignoreIdentifiers": false, "ignoreLiterals": false },
   "deadCode": { "exports": true, "dependencies": true, "files": true, "orphans": true, "production": false },

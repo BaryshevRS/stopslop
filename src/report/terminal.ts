@@ -1,5 +1,6 @@
 import { relative, sep } from 'node:path';
 import pc from 'picocolors';
+import type { FunctionGroup } from '../analyzers/god-function.js';
 import { configFilePath } from '../config.js';
 import type { AnalyzeResult } from '../index.js';
 import type { SlopLevel } from '../score.js';
@@ -12,7 +13,9 @@ import type { Finding } from '../types.js';
 const KIND_LABEL: Record<Finding['kind'], string> = {
   'god-module': 'god module',
   'god-class': 'god class',
+  'god-function': 'god function',
   'cognitive-complexity': 'complex fn',
+  'jsx-cognitive-complexity': 'complex JSX render',
   'multiple-exported-classes': 'multi-class file',
   'duplicate-code': 'clone',
   'unused-export': 'unused export',
@@ -37,6 +40,7 @@ export function renderTerminal(result: AnalyzeResult, details: boolean): string 
   );
   lines.push('');
   lines.push(renderScore(result));
+
   if (result.gitBase !== undefined) {
     lines.push(
       '  ' +
@@ -45,13 +49,9 @@ export function renderTerminal(result: AnalyzeResult, details: boolean): string 
         ),
     );
   } else if (result.baselineSuppressed !== undefined) {
-    lines.push(
-      '  ' +
-        pc.dim(
-          `baseline: ${result.baselineSuppressed} accepted · ${findings.length} new`,
-        ),
-    );
+    lines.push('  ' + pc.dim(`baseline: ${result.baselineSuppressed} accepted · ${findings.length} new`));
   }
+
   lines.push('');
 
   if (findings.length === 0) {
@@ -61,34 +61,40 @@ export function renderTerminal(result: AnalyzeResult, details: boolean): string 
         : result.baselineSuppressed !== undefined
           ? '✓ no new slop since baseline'
           : '✓ no slop signals';
+
     lines.push('  ' + pc.green(msg));
     lines.push('');
     lines.push(renderFooter(result).join('\n'));
+
     return lines.join('\n');
   }
 
   const counts = countByKind(findings);
-  const chips = KIND_ORDER.filter((k) => counts[k] > 0).map(
-    (k) => `${pc.bold(String(counts[k]))} ${pluralize(KIND_LABEL[k], counts[k])}`,
+  const chips = KIND_ORDER.filter(k => counts[k] > 0).map(
+    k => `${pc.bold(String(counts[k]))} ${pluralize(KIND_LABEL[k], counts[k])}`,
   );
+
   lines.push('  ' + chips.join(pc.dim('  ·  ')));
   lines.push('');
 
   const shown: Record<string, number> = {};
+
   for (const f of findings) {
     const n = (shown[f.kind] = (shown[f.kind] ?? 0) + 1);
+
     if (n <= MAX_PER_KIND) lines.push(renderFinding(f, details));
   }
+
   for (const kind of KIND_ORDER) {
     const hidden = counts[kind] - MAX_PER_KIND;
+
     if (hidden > 0) {
-      lines.push(
-        '  ' + pc.dim(`… ${hidden} more ${pluralize(KIND_LABEL[kind], hidden)} (--json for all)`),
-      );
+      lines.push('  ' + pc.dim(`… ${hidden} more ${pluralize(KIND_LABEL[kind], hidden)} (--json for all)`));
     }
   }
 
   lines.push(...renderFooter(result));
+
   return lines.join('\n');
 }
 
@@ -99,21 +105,21 @@ function renderScore(result: AnalyzeResult): string {
   // A score built from a subset of the signals is not comparable with a full
   // one: the missing weight is renormalized away, which pushes the number UP.
   // Say so, or two runs get compared as if they measured the same thing.
-  const partial =
-    signalCount < totalSignals
-      ? pc.yellow(` — ${signalCount}/${totalSignals} signals, see notes`)
-      : '';
+  const partial = signalCount < totalSignals ? pc.yellow(` — ${signalCount}/${totalSignals} signals, see notes`) : '';
   // Context, not another verdict: core signals vs the 41-repo OSS corpus.
   const anchor =
-    percentile !== undefined ? pc.dim(`  ·  worse than ${percentile}% of reference repos`) : '';
+    percentile !== undefined ? pc.dim(`  ·  legacy metrics worse than ${percentile}% of reference repos`) : '';
+
   const head = `  slop level: ${paint(pc.bold(level))} ${pc.dim(`(${score.toFixed(1)}/100)`)}${anchor}${partial}`;
 
   const parts: string[] = [];
+
   if (densities.god !== undefined) parts.push(`god units ${densities.god.toFixed(2)}/KLOC`);
-  if (densities.complexity !== undefined)
-    parts.push(`complex fns ${densities.complexity.toFixed(2)}/KLOC`);
-  if (densities.duplication !== undefined)
-    parts.push(`duplication ${(densities.duplication * 100).toFixed(1)}%`);
+
+  if (densities.complexity !== undefined) parts.push(`complex fns ${densities.complexity.toFixed(2)}/KLOC`);
+
+  if (densities.duplication !== undefined) parts.push(`duplication ${(densities.duplication * 100).toFixed(1)}%`);
+
   if (densities.deadCode !== undefined) parts.push(`dead code ${densities.deadCode.toFixed(2)}/KLOC`);
 
   return parts.length > 0 ? head + '\n  ' + pc.dim(parts.join('  ·  ')) : head;
@@ -136,32 +142,40 @@ const LEVEL_COLOR: Record<SlopLevel, (s: string) => string> = {
  */
 function renderConfigHints(result: AnalyzeResult): string[] {
   if (result.configHints.length === 0) return [];
+
   const lines = ['', '  ' + pc.bold('config hints') + pc.dim('  (from Knip)')];
+
   for (const hint of result.configHints) {
-    const where =
-      hint.workspace && hint.workspace !== hint.identifier ? `  in ${hint.workspace}` : '';
+    const where = hint.workspace && hint.workspace !== hint.identifier ? `  in ${hint.workspace}` : '';
     const size = hint.size === undefined ? '' : `  ·  ${hint.size} files`;
     lines.push(`  ${pc.yellow(hint.identifier)}${pc.dim(where + size)}`);
     lines.push('    ' + pc.dim(hint.message));
   }
+
   const file = relative(result.root, configFilePath(result.root, result.config)).split(sep).join('/');
   lines.push('  ' + pc.dim(`→ Knip settings live under \`knip\` in ${file} (knip.json is not read)`));
   lines.push('  ' + pc.dim('  reference: https://knip.dev/reference/configuration'));
+
   return lines;
 }
 
 function renderFooter(result: AnalyzeResult): string[] {
   const lines: string[] = [...renderConfigHints(result), ''];
+
   for (const note of result.notes) lines.push('  ' + pc.dim(note));
+
   if (result.config.preliminary) {
     lines.push('  ' + pc.yellow('thresholds are preliminary (pre-calibration) — see docs/thresholds.md'));
   }
+
   if (result.errors.length > 0) {
     lines.push('  ' + pc.dim(`${result.errors.length} file(s) skipped on error`));
   }
+
   // Attribution is not optional: two of the four checks are other people's engines.
   lines.push('  ' + pc.dim('clones: Clone Alert  ·  dead code: Knip'));
   lines.push('');
+
   return lines;
 }
 
@@ -175,11 +189,28 @@ function renderFinding(f: Finding, details: boolean): string {
     // The first occurrence is already on the location line above.
     const rest = occurrences.slice(1);
     const list = details ? rest : rest.slice(0, 3);
+
     for (const o of list) out.push('      ' + pc.dim(`also ${o.file}:${o.startLine}-${o.endLine}`));
+
     if (!details && rest.length > list.length) {
       out.push('      ' + pc.dim(`also +${rest.length - list.length} more`));
     }
+
     return out.join('\n');
+  }
+
+  if (details && f.kind === 'god-function') {
+    const groups = (f.data?.groups as FunctionGroup[]) ?? [];
+
+    for (const group of groups) {
+      out.push('      ' + group.functions.map(({ name, line }) => `${name}:${line}`).join(', '));
+
+      if (group.state.length) out.push('        ' + pc.dim(`captured bindings: ${group.state.join(', ')}`));
+
+      if (group.externalDependencies.length) {
+        out.push('        ' + pc.dim(`boundary dependencies: ${group.externalDependencies.join(', ')}`));
+      }
+    }
   }
 
   if (details && (f.kind === 'god-module' || f.kind === 'god-class')) {
@@ -187,31 +218,35 @@ function renderFinding(f: Finding, details: boolean): string {
     const groups = (f.data?.groups as string[][]) ?? [];
     const standalone = (f.data?.standalone as string[]) ?? [];
     const hubs = (f.data?.hubs as string[]) ?? [];
+
     if (hubs.length > 0) {
       out.push('      ' + pc.dim('cohesion held together by: ') + pc.yellow(hubs.join(', ')));
     }
+
     if (axis === 'size' && groups.length < 3) {
       // densely coupled monolith — no clean automatic boundaries
-      out.push(
-        '      ' +
-          pc.dim('densely coupled — no clean split boundaries; decompose by responsibility manually'),
-      );
+      out.push('      ' + pc.dim('densely coupled — no clean split boundaries; decompose by responsibility manually'));
+
       // Only show partial grouping when there is real substructure (2+ groups),
       // not one giant blob.
       if (groups.length >= 2) {
         out.push('      ' + pc.dim('partial grouping:'));
-        groups.forEach((c, i) => out.push('        ' + pc.dim(`${i + 1}.`) + ' ' + c.join(', ')));
+        groups.forEach((c, i) => {
+          out.push('        ' + pc.dim(`${i + 1}.`) + ' ' + c.join(', '));
+        });
       }
     } else {
       out.push('      ' + pc.dim(`${groups.length} responsibility groups (suggested split boundaries):`));
       groups.forEach((c, i) => {
         out.push('        ' + pc.dim(`${i + 1}.`) + ' ' + c.join(', '));
       });
+
       if (standalone.length > 0) {
         out.push('      ' + pc.dim(`+ ${standalone.length} standalone: `) + pc.dim(previewList(standalone)));
       }
     }
   }
+
   return out.join('\n');
 }
 
@@ -227,21 +262,26 @@ function formatKloc(loc: number): string {
 
 function pluralize(label: string, n: number): string {
   if (n === 1) return label;
+
   return /(s|x|ch|sh)$/.test(label) ? `${label}es` : `${label}s`;
 }
 
 function previewList(names: string[], max = 8): string {
   if (names.length <= max) return names.join(', ');
+
   return names.slice(0, max).join(', ') + `, …+${names.length - max}`;
 }
 
 function tagFor(f: Finding): string {
   const label = ` ${KIND_LABEL[f.kind]} `;
+
   switch (f.kind) {
     case 'god-module':
     case 'god-class':
+    case 'god-function':
       return pc.bgRed(pc.white(pc.bold(label)));
     case 'cognitive-complexity':
+    case 'jsx-cognitive-complexity':
     case 'duplicate-code':
       return pc.bgYellow(pc.black(label));
     case 'unused-export':
@@ -257,7 +297,9 @@ function tagFor(f: Finding): string {
 }
 
 function countByKind(findings: Finding[]): Record<Finding['kind'], number> {
-  const counts = Object.fromEntries(KIND_ORDER.map((k) => [k, 0])) as Record<Finding['kind'], number>;
+  const counts = Object.fromEntries(KIND_ORDER.map(k => [k, 0])) as Record<Finding['kind'], number>;
+
   for (const f of findings) counts[f.kind]++;
+
   return counts;
 }

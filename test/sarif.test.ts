@@ -19,6 +19,7 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
       ],
     },
   };
+
   const unusedFile: Finding = {
     kind: 'unused-file',
     file: '/workspace/project/src/unused.ts',
@@ -27,6 +28,7 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
     severity: 'info',
     message: 'File is unused',
   };
+
   const result = {
     root: '/workspace/project',
     fileCount: 3,
@@ -64,9 +66,7 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
   // Code Scanning truncates a longer full description.
   expect(cloneRule.fullDescription.text.length).toBeLessThanOrEqual(1024);
 
-  const cloneResult = sarif.runs[0].results.find(
-    (entry: { ruleId: string }) => entry.ruleId === 'duplicate-code',
-  );
+  const cloneResult = sarif.runs[0].results.find((entry: { ruleId: string }) => entry.ruleId === 'duplicate-code');
   expect(cloneResult).toMatchObject({
     ruleId: 'duplicate-code',
     level: 'warning',
@@ -93,9 +93,7 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
     },
   ]);
 
-  const unusedResult = sarif.runs[0].results.find(
-    (entry: { ruleId: string }) => entry.ruleId === 'unused-file',
-  );
+  const unusedResult = sarif.runs[0].results.find((entry: { ruleId: string }) => entry.ruleId === 'unused-file');
   expect(unusedResult).toMatchObject({
     ruleId: 'unused-file',
     level: 'note',
@@ -112,9 +110,8 @@ it('renders reported findings as stable GitHub-compatible SARIF 2.1.0', () => {
 
   const expectedFingerprint = createHash('sha256').update(fingerprint(clone)).digest('hex');
   expect(cloneResult.partialFingerprints).toEqual({ primaryLocationLineHash: expectedFingerprint });
-  expect(rerendered.runs[0].results[0].partialFingerprints).toEqual(
-    cloneResult.partialFingerprints,
-  );
+  expect(rerendered.runs[0].results[0].partialFingerprints).toEqual(cloneResult.partialFingerprints);
+
   for (const entry of sarif.runs[0].results) {
     for (const location of entry.locations) {
       const uri = location.physicalLocation.artifactLocation.uri;

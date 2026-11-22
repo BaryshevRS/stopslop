@@ -23,32 +23,40 @@ interface Obs {
   weight: number; // LOC
 }
 
-const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n);
+const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n, true);
 
 function substantiveGroups(unit: CohesionUnit): number {
   const { clusters } = computeCohesion(unit.members, 0.5);
-  return clusters.filter((c) => c.length >= 2).length;
+
+  return clusters.filter(c => c.length >= 2).length;
 }
 function fnCount(unit: CohesionUnit): number {
-  return unit.members.filter((m) => m.kind === 'function').length;
+  return unit.members.filter(m => m.kind === 'function').length;
 }
 function totalComplexity(unit: CohesionUnit): number {
   return unit.members.reduce((s, m) => s + m.complexity, 0);
 }
 function unitLoc(unit: CohesionUnit): number {
-  return Math.max(1, unit.members.reduce((s, m) => s + m.loc, 0));
+  return Math.max(
+    1,
+    unit.members.reduce((s, m) => s + m.loc, 0),
+  );
 }
 
 function percentile(obs: Obs[], p: number, loc: boolean): number {
   if (obs.length === 0) return 0;
+
   const sorted = [...obs].sort((a, b) => a.value - b.value);
   const total = sorted.reduce((s, o) => s + (loc ? o.weight : 1), 0);
   const target = total * p;
   let acc = 0;
+
   for (const o of sorted) {
     acc += loc ? o.weight : 1;
+
     if (acc >= target) return o.value;
   }
+
   return sorted[sorted.length - 1]!.value;
 }
 /** Count-based percentile (each entity = 1) — "flag the worst N% of entities". */
@@ -59,15 +67,16 @@ const lp = (obs: Obs[], p: number): number => Math.round(percentile(obs, p, true
 const PCTS = [0.5, 0.75, 0.9, 0.95, 0.99];
 
 function row(name: string, obs: Obs[], loc: boolean): string {
-  const cells = PCTS.map((p) => String(loc ? lp(obs, p) : cp(obs, p)));
+  const cells = PCTS.map(p => String(loc ? lp(obs, p) : cp(obs, p)));
+
   return `| ${name} | ${obs.length} | ${cells.join(' | ')} |`;
 }
 
 function main(): void {
   const corpusDir = resolve(process.argv[2] ?? '/Users/rock/Projects/clone-alert/bench/repos');
   const repos = readdirSync(corpusDir, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name)
+    .filter(e => e.isDirectory())
+    .map(e => e.name)
     .sort();
 
   const fnComplexity: Obs[] = [];
@@ -83,22 +92,29 @@ function main(): void {
 
   for (const repo of repos) {
     const root = resolve(corpusDir, repo);
+
     try {
       if (!statSync(root).isDirectory()) continue;
     } catch {
       continue;
     }
+
     const files = discover(root, { ignore: [] });
     let repoFiles = 0;
+
     for (const abs of files) {
       let source: string;
+
       try {
         source = readFileSync(abs, 'utf8');
       } catch {
         continue;
       }
+
       const { file } = parseFile(abs, abs, source);
+
       if (!file) continue;
+
       repoFiles++;
       totalFiles++;
 
@@ -109,6 +125,7 @@ function main(): void {
 
       const mod = extractModule(file, complexityOf);
       const modFns = fnCount(mod);
+
       if (modFns >= 5) {
         const w = unitLoc(mod);
         moduleMembers.push({ value: modFns, weight: w });
@@ -118,13 +135,16 @@ function main(): void {
 
       for (const cls of extractClasses(file, complexityOf)) {
         const n = fnCount(cls);
+
         if (n < 3) continue;
+
         const w = unitLoc(cls);
         classMembers.push({ value: n, weight: w });
         classGroups.push({ value: substantiveGroups(cls), weight: w });
         classComplexity.push({ value: totalComplexity(cls), weight: w });
       }
     }
+
     perRepo.push(`- ${repo}: ${repoFiles} files`);
   }
 

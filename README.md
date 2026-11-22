@@ -23,10 +23,13 @@ upload. Node.js 22.13 or later is required.
 
 ## What it catches
 
-- **Tangled functions** using cognitive complexity from the SonarSource
-  specification.
+- **Tangled functions and JSX renders** with independent cognitive complexity
+  budgets. Nested callbacks get their own scores.
 - **God classes and god modules** that mix unrelated responsibilities or have
   grown into densely connected monoliths.
+- **God functions** whose nested logic exceeds a size budget or whose local
+  functions form several candidates for extraction. This experimental check is
+  opt-in: set `"godFunction": {}` in `stopslop.json`.
 - **Useful split boundaries** for god units when cohesion exposes responsibility
   groups that should move together.
 - **Copy-pasted blocks**, with optional identifier normalization to catch copies
@@ -416,6 +419,12 @@ dead-code analysis in a monorepo. Use SARIF for GitHub Code Scanning, JSON for
 automation and coding agents, or the Shields format for a README status badge.
 
 ## Development
+
+Biome checks formatting and lint errors in TypeScript and JavaScript source,
+scripts, hooks, and tests. ESLint Stylistic enforces blank lines around control
+flow and after multiline declarations. Run `pnpm check` to verify or
+`pnpm format:fix` to apply both formatting tools. The generated JSON schema is
+maintained by `pnpm schema:generate`.
 
 ```bash
 pnpm install

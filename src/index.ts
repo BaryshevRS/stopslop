@@ -4,19 +4,13 @@ import { mkdtemp, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
-import type {
-  Analyzer,
-  ConfigHint,
-  Finding,
-  ParsedFile,
-  ProjectMetrics,
-  ResolvedConfig,
-} from './types.js';
+import type { Analyzer, ConfigHint, Finding, ParsedFile, ProjectMetrics, ResolvedConfig } from './types.js';
 import { applyBaseline, fingerprint } from './baseline.js';
 import { discover } from './discover.js';
 import { parseFile } from './parse.js';
 import { cognitiveComplexityAnalyzer } from './analyzers/cognitive-complexity.js';
 import { structureAnalyzer } from './analyzers/detectors.js';
+import { godFunctionAnalyzer } from './analyzers/god-function.js';
 import { duplicatesAnalyzer } from './analyzers/duplicates.js';
 import { deadCodeAnalyzer } from './analyzers/dead-code.js';
 import { computeScore, type SlopScore } from './score.js';
@@ -68,6 +62,7 @@ export function defaultAnalyzers(): Analyzer[] {
   return [
     cognitiveComplexityAnalyzer(),
     structureAnalyzer(),
+    godFunctionAnalyzer(),
     duplicatesAnalyzer(),
     deadCodeAnalyzer(),
   ];
@@ -91,25 +86,37 @@ export async function analyze(
   const configHints: ConfigHint[] = [];
   const findings: Finding[] = [];
   const metrics: Partial<ProjectMetrics> = {};
-  const ctx = { config };
+  const referenceComplexity =
+    config.duplicates.enabled &&
+    config.cognitiveComplexity.enabled &&
+    analyzers.some(analyzer => analyzer.name === 'cognitive-complexity')
+      ? { count: 0 }
+      : undefined;
+
+  const ctx = { config, referenceComplexity };
   let loc = 0;
 
   for (const abs of files) {
     let source: string;
+
     try {
       source = readFileSync(abs, 'utf8');
     } catch (err) {
       errors.push(`read failed: ${abs}: ${(err as Error).message}`);
       continue;
     }
+
     const relPath = relative(absRoot, abs).split(sep).join('/');
     const result = parseFile(relPath, abs, source);
+
     if (!result.file) {
       errors.push(...result.errors);
       continue;
     }
+
     parsed.push(result.file);
     loc += countLines(source);
+
     for (const analyzer of analyzers) {
       if (analyzer.analyzeFile) {
         try {
@@ -122,8 +129,10 @@ export async function analyze(
   }
 
   const projectCtx = { root: absRoot, files: parsed, config, notes, configHints, metrics };
+
   for (const analyzer of analyzers) {
     if (!analyzer.analyzeProject) continue;
+
     try {
       findings.push(...(await analyzer.analyzeProject(projectCtx)));
     } catch (err) {
@@ -132,12 +141,13 @@ export async function analyze(
   }
 
   sortFindings(findings);
+
   return {
     root: absRoot,
     fileCount: parsed.length,
     loc,
     findings,
-    slop: computeScore({ findings, loc, metrics, config }),
+    slop: computeScore({ findings, loc, metrics, config, referenceComplexityCount: referenceComplexity?.count }),
     metrics,
     errors,
     notes,
@@ -157,10 +167,9 @@ export async function analyzeGitBase(
   const absRoot = realPath(resolve(root));
   const gitCwd = existsSync(absRoot) && !statSync(absRoot).isDirectory() ? dirname(absRoot) : absRoot;
   const repositoryRoot = realPath(
-    (
-      await runGit(gitCwd, ['rev-parse', '--show-toplevel'], 'find the Git repository root')
-    ).trim(),
+    (await runGit(gitCwd, ['rev-parse', '--show-toplevel'], 'find the Git repository root')).trim(),
   );
+
   const rootWithinRepository = relative(repositoryRoot, absRoot);
   const commit = (
     await runGit(
@@ -169,6 +178,7 @@ export async function analyzeGitBase(
       `resolve Git base ${JSON.stringify(baseRef)}`,
     )
   ).trim();
+
   if (!commit) throw new Error(`Failed to resolve Git base ${JSON.stringify(baseRef)}: empty commit`);
 
   const current = await analyze(absRoot, config, analyzers);
@@ -187,11 +197,15 @@ export async function analyzeGitBase(
 
     const baseRoot = resolve(worktreeRoot, rootWithinRepository);
     await linkDependencyContext(repositoryRoot, worktreeRoot);
+
     if (absRoot !== repositoryRoot) await linkDependencyContext(absRoot, baseRoot);
+
     const base = await analyze(baseRoot, config, analyzers);
+
     if (base.errors.length > 0) {
       throw new Error(`Git base analysis failed: ${base.errors.join('; ')}`);
     }
+
     const accepted = new Set(base.findings.map(fingerprint));
     const { kept, suppressed } = applyBaseline(current.findings, accepted);
 
@@ -202,26 +216,27 @@ export async function analyzeGitBase(
     };
   } catch (error) {
     operationFailed = true;
+
     throw error;
   } finally {
     let cleanupError: unknown;
+
     try {
-      await runGit(
-        repositoryRoot,
-        ['worktree', 'remove', '--force', worktreeRoot],
-        'remove temporary Git worktree',
-      );
+      await runGit(repositoryRoot, ['worktree', 'remove', '--force', worktreeRoot], 'remove temporary Git worktree');
     } catch (error) {
       // A failed `worktree add` may or may not have registered the path. If it
       // did complete, cleanup failure is material; otherwise there is nothing
       // registered to remove and the original error is the useful one.
       if (worktreeAdded) cleanupError = error;
     }
+
     try {
       await rm(temporaryRoot, { recursive: true, force: true });
     } catch (error) {
       cleanupError ??= error;
     }
+
+    // biome-ignore lint/correctness/noUnsafeFinally: preserve the original error when cleanup also fails.
     if (cleanupError && !operationFailed) throw cleanupError;
   }
 }
@@ -231,6 +246,7 @@ async function linkDependencyContext(currentRoot: string, baseRoot: string): Pro
   for (const name of ['node_modules', '.nuxt', '.astro']) {
     const source = join(currentRoot, name);
     const target = join(baseRoot, name);
+
     if (existsSync(source) && !existsSync(target)) await symlink(source, target, 'junction');
   }
 }
@@ -238,10 +254,12 @@ async function linkDependencyContext(currentRoot: string, baseRoot: string): Pro
 async function runGit(cwd: string, args: string[], action: string): Promise<string> {
   try {
     const { stdout } = await execFileAsync('git', ['-C', cwd, ...args], { encoding: 'utf8' });
+
     return stdout;
   } catch (error) {
     const failure = error as Error & { stderr?: string };
     const detail = failure.stderr?.trim() || failure.message;
+
     throw new Error(`Failed to ${action}: ${detail}`);
   }
 }
@@ -249,10 +267,13 @@ async function runGit(cwd: string, args: string[], action: string): Promise<stri
 /** Physical lines; a trailing newline does not add one. */
 function countLines(source: string): number {
   if (source.length === 0) return 0;
+
   let lines = 1;
+
   for (let i = 0; i < source.length; i++) {
     if (source.charCodeAt(i) === 10 && i !== source.length - 1) lines++;
   }
+
   return lines;
 }
 
@@ -268,32 +289,43 @@ function realPath(absPath: string): string {
 const KIND_ORDER: Record<Finding['kind'], number> = {
   'god-module': 0,
   'god-class': 1,
-  'duplicate-code': 2,
-  'cognitive-complexity': 3,
+  'god-function': 2,
+  'duplicate-code': 3,
+  'cognitive-complexity': 4,
+  'jsx-cognitive-complexity': 5,
   // Leads the dead-code group: the only one of them that names exactly what to
   // delete, so it should not be buried under a list of plain unused exports.
-  'orphan-feature': 4,
-  'unused-export': 5,
-  'unused-dependency': 6,
-  'unused-file': 7,
-  'multiple-exported-classes': 8,
+  'orphan-feature': 6,
+  'unused-export': 7,
+  'unused-dependency': 8,
+  'unused-file': 9,
+  'multiple-exported-classes': 10,
 };
 
 function sortFindings(findings: Finding[]): void {
   // Group by kind (god signals lead), then by internal severity within the kind.
   findings.sort((a, b) => {
     const k = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+
     if (k !== 0) return k;
+
     const sev = severityRank(b) - severityRank(a);
+
     if (sev !== 0) return sev;
+
     if (a.file !== b.file) return a.file.localeCompare(b.file);
+
     return a.line - b.line;
   });
 }
 function severityRank(f: Finding): number {
-  if (f.kind === 'cognitive-complexity') return (f.data?.complexity as number) ?? 0;
+  if (f.kind === 'cognitive-complexity' || f.kind === 'jsx-cognitive-complexity') {
+    return (f.data?.complexity as number) ?? 0;
+  }
+
   // Clones: the bigger the copied span, the worse.
   if (f.kind === 'duplicate-code') return (f.data?.tokenCount as number) ?? 0;
+
   // god findings: rank by WMC (total complexity) — works for both axes.
   return (f.data?.totalComplexity as number) ?? (f.data?.groupCount as number) ?? 1;
 }

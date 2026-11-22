@@ -1,4 +1,5 @@
 import type { Finding, ProjectMetrics, ResolvedConfig, ScoreConfig, ScoreSignals } from './types.js';
+import { DEFAULT_GOD_FUNCTION, jsxComplexityGate } from './config.js';
 import { REFERENCE_CORPUS } from './corpus.js';
 
 // Slop level — one number so a repo can be compared with itself over time and
@@ -54,6 +55,7 @@ export interface ScoreInput {
   loc: number;
   metrics: Partial<ProjectMetrics>;
   config: ResolvedConfig;
+  referenceComplexityCount?: number;
 }
 
 export function computeScore(input: ScoreInput): SlopScore {
@@ -66,15 +68,20 @@ export function computeScore(input: ScoreInput): SlopScore {
   // disabled, or that bailed out (no install, no package.json), must not read as
   // a clean bill of health, so it drops out of the denominator too. The AST
   // checks always run when enabled; the engines report back through `metrics`.
-  if (config.godModule.enabled || config.godClass.enabled) {
-    densities.god = perKloc(counts.god, kloc);
+  const legacyGodChecks = config.godModule.enabled || config.godClass.enabled;
+
+  if (legacyGodChecks || (config.godFunction ?? DEFAULT_GOD_FUNCTION).enabled) {
+    densities.god = perKloc(counts.god + counts.godFunction, kloc);
   }
-  if (config.cognitiveComplexity.enabled) {
+
+  if (config.cognitiveComplexity.enabled || jsxComplexityGate(config).enabled) {
     densities.complexity = perKloc(counts.complexity, kloc);
   }
+
   if (input.metrics.duplicationRatio !== undefined) {
     densities.duplication = input.metrics.duplicationRatio;
   }
+
   if (input.metrics.deadCodeMeasured) {
     densities.deadCode = perKloc(counts.deadCode, kloc);
   }
@@ -82,6 +89,7 @@ export function computeScore(input: ScoreInput): SlopScore {
   const contributions: Partial<ScoreSignals> = {};
   let weighted = 0;
   let totalWeight = 0;
+
   for (const signal of Object.keys(densities) as (keyof ScoreSignals)[]) {
     const weight = config.score.weights[signal];
     const saturated = saturate(densities[signal]!, signal, config.score);
@@ -91,6 +99,14 @@ export function computeScore(input: ScoreInput): SlopScore {
   }
 
   const score = totalWeight > 0 ? round((100 * weighted) / totalWeight, 1) : 0;
+  const referenceDensities = {
+    ...densities,
+    god: legacyGodChecks ? perKloc(counts.god, kloc) : undefined,
+    complexity: config.cognitiveComplexity.enabled
+      ? perKloc(input.referenceComplexityCount ?? counts.bodyComplexity, kloc)
+      : undefined,
+  };
+
   return {
     score,
     level: levelFor(score),
@@ -100,7 +116,7 @@ export function computeScore(input: ScoreInput): SlopScore {
     contributions,
     signalCount: Object.keys(densities).length,
     totalSignals: TOTAL_SIGNALS,
-    percentile: corpusPercentile(densities, config.score),
+    percentile: corpusPercentile(referenceDensities, config.score),
   };
 }
 
@@ -108,8 +124,11 @@ export function computeScore(input: ScoreInput): SlopScore {
 function saturate(value: number, signal: keyof ScoreSignals, score: ScoreConfig): number {
   const floor = score.floors[signal];
   const budget = score.budgets[signal];
+
   if (budget <= floor) return 0; // degenerate config — refuse to divide by it
+
   if (value <= floor) return 0;
+
   return Math.min(1, (value - floor) / (budget - floor));
 }
 
@@ -120,63 +139,78 @@ function saturate(value: number, signal: keyof ScoreSignals, score: ScoreConfig)
  * Uses the caller's weights/floors/budgets, so a custom config re-ranks the
  * corpus with the same yardstick it applies to the repo.
  */
-export function corpusPercentile(
-  densities: Partial<ScoreSignals>,
-  score: ScoreConfig,
-): number | undefined {
+export function corpusPercentile(densities: Partial<ScoreSignals>, score: ScoreConfig): number | undefined {
   const { god, duplication, complexity } = densities;
+
   if (god === undefined || duplication === undefined || complexity === undefined) return undefined;
+
   const mine = coreScore({ god, duplication, complexity }, score);
   let below = 0;
+
   for (const entry of REFERENCE_CORPUS) {
     if (coreScore(entry, score) < mine) below++;
   }
+
   return Math.round((100 * below) / REFERENCE_CORPUS.length);
 }
 
-function coreScore(
-  d: { god: number; duplication: number; complexity: number },
-  score: ScoreConfig,
-): number {
+function coreScore(d: { god: number; duplication: number; complexity: number }, score: ScoreConfig): number {
   const signals = ['god', 'duplication', 'complexity'] as const;
   let weighted = 0;
   let totalWeight = 0;
+
   for (const signal of signals) {
     weighted += score.weights[signal] * saturate(d[signal], signal, score);
     totalWeight += score.weights[signal];
   }
+
   return totalWeight > 0 ? (100 * weighted) / totalWeight : 0;
 }
 
 /** Bands are labels for the score, not extra detection thresholds. */
 export function levelFor(score: number): SlopLevel {
   if (score < 10) return 'clean';
+
   if (score < 25) return 'low';
+
   if (score < 50) return 'moderate';
+
   if (score < 75) return 'high';
+
   return 'legacy-grade';
 }
 
 interface KindCounts {
   god: number;
+  godFunction: number;
   complexity: number;
+  bodyComplexity: number;
   deadCode: number;
 }
 
 function countKinds(findings: Finding[]): KindCounts {
-  const counts: KindCounts = { god: 0, complexity: 0, deadCode: 0 };
+  const counts: KindCounts = { god: 0, godFunction: 0, complexity: 0, bodyComplexity: 0, deadCode: 0 };
+  const complexFunctions = new Set<string>();
+
   for (const f of findings) {
     // Only signals we stand behind move the number. `info` findings (unused
     // *files*, which hang on entry-point detection) are reported but never
     // scored — otherwise a misdetected entry point outweighs a real god class.
     if (f.severity === 'info') continue;
+
     switch (f.kind) {
       case 'god-module':
       case 'god-class':
         counts.god++;
         break;
+      case 'god-function':
+        counts.godFunction++;
+        break;
       case 'cognitive-complexity':
-        counts.complexity++;
+      case 'jsx-cognitive-complexity':
+        if (f.kind === 'cognitive-complexity') counts.bodyComplexity++;
+
+        complexFunctions.add(`${f.file}\u0000${f.symbol}`);
         break;
       case 'unused-export':
       case 'unused-dependency':
@@ -194,6 +228,9 @@ function countKinds(findings: Finding[]): KindCounts {
         break; // multiple-exported-classes and duplicates are scored elsewhere
     }
   }
+
+  counts.complexity = complexFunctions.size;
+
   return counts;
 }
 
@@ -203,13 +240,16 @@ function perKloc(count: number, kloc: number): number {
 
 function round(n: number, digits: number): number {
   const f = 10 ** digits;
+
   return Math.round(n * f) / f;
 }
 
 function roundAll(densities: Partial<ScoreSignals>): Partial<ScoreSignals> {
   const out: Partial<ScoreSignals> = {};
+
   for (const [k, v] of Object.entries(densities) as [keyof ScoreSignals, number][]) {
     out[k] = round(v, 3);
   }
+
   return out;
 }

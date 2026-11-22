@@ -14,7 +14,9 @@ const ROOT = '/repo';
 
 function sourceFile(relPath: string, source: string): ParsedFile {
   const parsed = parseFile(relPath, `${ROOT}/${relPath}`, source);
+
   if (!parsed.file) throw new Error(parsed.errors.join('; '));
+
   return parsed.file;
 }
 
@@ -28,7 +30,7 @@ function described(identifier: string, importedBy: string[]): File {
     pos: 0,
     entryPaths: new Set<string>(),
     exports: undefined,
-    importLocations: importedBy.map((rel) => ({
+    importLocations: importedBy.map(rel => ({
       identifier,
       filePath: `${ROOT}/${rel}`,
       line: 1,
@@ -36,6 +38,7 @@ function described(identifier: string, importedBy: string[]): File {
       pos: 0,
     })),
   } as unknown as Export;
+
   return { exports: [exported] } as unknown as File;
 }
 
@@ -52,13 +55,15 @@ describe('orphan features', () => {
       ...parsed,
       absPath: 'C:\\repo\\src\\discount.ts',
     };
+
     const describedPaths: string[] = [];
 
     findOrphanFeatures({
       root: ROOT,
       files: [file],
-      describeFile: (absPath) => {
+      describeFile: absPath => {
         describedPaths.push(absPath);
+
         return undefined;
       },
     });
@@ -118,7 +123,7 @@ describe('orphan features', () => {
       described('pxToPt', ['src/spec/spec.test.ts']),
     );
 
-    expect(findings.map((f) => f.symbol)).toEqual(['pxToPt']);
+    expect(findings.map(f => f.symbol)).toEqual(['pxToPt']);
   });
 
   it('spares a constant that is only a test handle onto an outside asset', () => {
@@ -135,10 +140,7 @@ describe('orphan features', () => {
   });
 
   it('still reports an orphan written as an arrow constant', () => {
-    const arrow = sourceFile(
-      'src/discount.ts',
-      'export const applyDiscount = (t) => t * 0.9;\n',
-    );
+    const arrow = sourceFile('src/discount.ts', 'export const applyDiscount = (t) => t * 0.9;\n');
 
     expect(run(arrow, described('applyDiscount', ['test/discount.test.ts']))).toHaveLength(1);
   });
@@ -148,6 +150,7 @@ describe('orphan features', () => {
       { kind: 'orphan-feature', file: 'a.ts', symbol: 'a', line: 1, severity: 'warn', message: '' },
       { kind: 'orphan-feature', file: 'b.ts', symbol: 'b', line: 1, severity: 'warn', message: '' },
     ];
+
     const input = { loc: 1000, metrics: { deadCodeMeasured: true }, config: resolveConfig({}) };
 
     const clean = computeScore({ ...input, findings: [] });
@@ -181,10 +184,7 @@ describe('orphan features, end to end', () => {
     );
     write('src/discount.ts', 'export function applyDiscount(total: number): number {\n  return total * 0.9;\n}\n');
     write('test/price.test.ts', "import { calcTax } from '../src/price.js';\ncalcTax(1);\n");
-    write(
-      'test/discount.test.ts',
-      "import { applyDiscount } from '../src/discount.js';\napplyDiscount(1);\n",
-    );
+    write('test/discount.test.ts', "import { applyDiscount } from '../src/discount.js';\napplyDiscount(1);\n");
 
     // `root` is left as mkdtemp returned it — a symlinked /tmp on macOS. Knip
     // keys its graph by real paths, so this also guards the resolution step.
@@ -192,9 +192,10 @@ describe('orphan features, end to end', () => {
       root,
       resolveConfig({ knip: { entry: ['src/index.ts', 'test/**/*.test.ts'], project: ['**/*.ts'] } }),
     );
-    const orphans = result.findings.filter((f) => f.kind === 'orphan-feature');
 
-    expect(orphans.map((f) => `${f.file}:${f.symbol}`)).toEqual(['src/discount.ts:applyDiscount']);
+    const orphans = result.findings.filter(f => f.kind === 'orphan-feature');
+
+    expect(orphans.map(f => `${f.file}:${f.symbol}`)).toEqual(['src/discount.ts:applyDiscount']);
     expect(orphans[0]!.data).toMatchObject({ test: 'test/discount.test.ts' });
   });
 });

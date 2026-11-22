@@ -9,8 +9,9 @@ import { emitGenerated } from './emit-generated.js';
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outputPath = resolve(projectRoot, 'docs/rules.md');
 
-const sections = RULE_KINDS.map((kind) => {
+const sections = RULE_KINDS.map(kind => {
   const rule = ruleHelp(kind);
+
   return [`## ${kind}`, `${rule.summary}.`, ruleMarkdown(rule)].join('\n\n');
 });
 

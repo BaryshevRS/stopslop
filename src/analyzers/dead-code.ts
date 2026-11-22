@@ -20,18 +20,23 @@ export function deadCodeAnalyzer(): Analyzer {
     name: 'dead-code',
     async analyzeProject(ctx: ProjectContext): Promise<Finding[]> {
       const gate = ctx.config.deadCode;
+
       if (!gate.enabled) return [];
 
       const packageRoot = findPackageRoot(ctx.root);
+
       if (!packageRoot) {
         ctx.notes.push('dead code: skipped, no package.json above the analyzed path');
+
         return [];
       }
+
       // Without an install, Knip cannot resolve a single import: every declared
       // dependency comes back "unused" and every file "unreachable". That is not
       // a finding, that is a broken run — refuse it instead of reporting noise.
       if (needsInstall(packageRoot)) {
         ctx.notes.push('dead code: skipped, dependencies are not installed (run your package manager first)');
+
         return [];
       }
 
@@ -45,11 +50,13 @@ export function deadCodeAnalyzer(): Analyzer {
       let orphans: Finding[] = [];
       const engineErrors: string[] = [];
       const restore = captureConsole(engineErrors);
+
       try {
         const { createSession, finalizeConfigurationHints } = await import('knip/session');
         const options = await createKnipOptions(packageRoot, ctx.config, {
           isProduction: gate.production,
         });
+
         const session = await createSession(options);
         const results = session.getResults();
         issues = results.issues;
@@ -62,6 +69,7 @@ export function deadCodeAnalyzer(): Analyzer {
         configHints = toConfigHints(
           finalizeConfigurationHints(results, { cwd: packageRoot, configFilePath: configFile }),
         );
+
         // Orphans come from the same session's module graph, not a second run:
         // `describeFile` answers who imports each export, which is exactly the
         // question, and answers it through Knip's own resolution of barrels and
@@ -70,15 +78,17 @@ export function deadCodeAnalyzer(): Analyzer {
           orphans = findOrphanFeatures({
             root: ctx.root,
             files: ctx.files,
-            describeFile: (absPath) => session.describeFile(absPath),
+            describeFile: absPath => session.describeFile(absPath),
           });
         }
       } catch (err) {
         ctx.notes.push(`dead code: knip failed (${(err as Error).message})`);
+
         return [];
       } finally {
         restore();
       }
+
       // Knip logs plugin/config-loading failures straight to the console. They
       // are its diagnostics, not our report — summarize, don't spray.
       if (engineErrors.length > 0) {
@@ -105,7 +115,8 @@ export function deadCodeAnalyzer(): Analyzer {
 
       // Only files we analyzed ourselves: keeps Knip's view of the project in
       // step with our ignore rules (tests, generated code, bundles).
-      const analyzed = new Set(ctx.files.map((f) => f.relPath));
+      const analyzed = new Set(ctx.files.map(f => f.relPath));
+
       return [...mapIssues(issues, { root: ctx.root, gate, analyzed }), ...orphans];
     },
   };
@@ -127,7 +138,9 @@ export function mapIssues(issues: Issues, options: MapOptions): Finding[] {
     // `types` = unused exported types; same class of problem as `exports`.
     for (const issue of flatten(issues.exports, issues.types)) {
       const file = toRelative(issue.filePath, options.root);
+
       if (!file || !options.analyzed.has(file)) continue;
+
       findings.push({
         kind: 'unused-export',
         file,
@@ -160,7 +173,9 @@ export function mapIssues(issues: Issues, options: MapOptions): Finding[] {
   if (gate.files) {
     for (const issue of flatten(issues.files)) {
       const file = toRelative(issue.filePath, options.root);
+
       if (!file || !options.analyzed.has(file)) continue;
+
       findings.push({
         kind: 'unused-file',
         file,
@@ -185,21 +200,17 @@ function* flatten(...records: Issues[keyof Issues][]): Generator<Issue> {
 }
 
 /** Absolute path → path relative to root (POSIX). Outside root → undefined. */
-function toRelative(
-  absPath: string,
-  root: string,
-  options: { allowOutside?: boolean } = {},
-): string | undefined {
+function toRelative(absPath: string, root: string, options: { allowOutside?: boolean } = {}): string | undefined {
   const rel = relative(root, absPath).split(sep).join('/');
+
   if (!options.allowOutside && (rel.startsWith('../') || rel === '')) return undefined;
+
   return rel;
 }
 
 /** Knip's two hints that mean "this run had no usable configuration". */
 export function isUnconfigured(hints: ConfigHint[]): boolean {
-  return hints.some(
-    (hint) => hint.type === 'top-level-unconfigured' || hint.type === 'workspace-unconfigured',
-  );
+  return hints.some(hint => hint.type === 'top-level-unconfigured' || hint.type === 'workspace-unconfigured');
 }
 
 /** Knip's processed hints, narrowed to what a report needs. */
@@ -213,7 +224,7 @@ function toConfigHints(
     size?: number;
   }[],
 ): ConfigHint[] {
-  return rows.map((row) => ({
+  return rows.map(row => ({
     type: row.type,
     identifier: row.identifier instanceof RegExp ? row.identifier.source : String(row.identifier),
     message: row.message,
@@ -226,13 +237,15 @@ function toConfigHints(
 /** True when package.json declares dependencies but node_modules is absent. */
 function needsInstall(packageRoot: string): boolean {
   if (existsSync(resolve(packageRoot, 'node_modules'))) return false;
+
   try {
     const pkg = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
-    const declared =
-      Object.keys(pkg.dependencies ?? {}).length + Object.keys(pkg.devDependencies ?? {}).length;
+
+    const declared = Object.keys(pkg.dependencies ?? {}).length + Object.keys(pkg.devDependencies ?? {}).length;
+
     return declared > 0;
   } catch {
     return false; // unreadable package.json — let Knip have its say
@@ -242,11 +255,11 @@ function needsInstall(packageRoot: string): boolean {
 /** Silence console output for the duration of a call, collecting it instead. */
 function captureConsole(sink: string[]): () => void {
   const { error, warn, log } = console;
-  const collect =
-    (...args: unknown[]): void => void sink.push(args.map(String).join(' '));
+  const collect = (...args: unknown[]): void => void sink.push(args.map(String).join(' '));
   console.error = collect;
   console.warn = collect;
   console.log = collect;
+
   return () => {
     console.error = error;
     console.warn = warn;
@@ -257,10 +270,14 @@ function captureConsole(sink: string[]): () => void {
 /** Nearest ancestor directory (inclusive) holding a package.json. */
 function findPackageRoot(from: string): string | undefined {
   let dir = resolve(from);
+
   for (;;) {
     if (existsSync(resolve(dir, 'package.json'))) return dir;
+
     const parent = dirname(dir);
+
     if (parent === dir) return undefined;
+
     dir = parent;
   }
 }

@@ -21,5 +21,6 @@ export function toBadge(result: AnalyzeResult): string {
     message: clear ? 'clear' : 'detected',
     color: clear ? 'brightgreen' : 'red',
   };
+
   return `${JSON.stringify(payload, null, 2)}\n`;
 }

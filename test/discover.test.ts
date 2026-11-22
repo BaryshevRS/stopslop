@@ -24,6 +24,7 @@ describe('discover', () => {
       mkdirSync(join(abs, '..'), { recursive: true });
       writeFileSync(abs, content);
     };
+
     w('src/a.ts');
     w('src/b.tsx');
     w('src/keep.js');
@@ -44,9 +45,7 @@ describe('discover', () => {
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
   it('finds real source and applies default + user excludes', () => {
-    const files = discover(root, { ignore: ['**/skip.ts'] }).map((f) =>
-      relative(root, f).split(sep).join('/'),
-    );
+    const files = discover(root, { ignore: ['**/skip.ts'] }).map(f => relative(root, f).split(sep).join('/'));
     expect(files).toContain('src/a.ts');
     expect(files).toContain('src/b.tsx');
     expect(files).toContain('src/keep.js');

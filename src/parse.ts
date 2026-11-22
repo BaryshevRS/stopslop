@@ -11,18 +11,23 @@ export interface ParseResult {
 export function makeLineIndex(source: string): (offset: number) => number {
   // lineStarts[i] = offset of the first char of line i (0-based line index).
   const lineStarts: number[] = [0];
+
   for (let i = 0; i < source.length; i++) {
     if (source.charCodeAt(i) === 10 /* \n */) lineStarts.push(i + 1);
   }
+
   return (offset: number): number => {
     // binary search for the last lineStart <= offset
     let lo = 0;
     let hi = lineStarts.length - 1;
+
     while (lo < hi) {
       const mid = (lo + hi + 1) >> 1;
+
       if (lineStarts[mid]! <= offset) lo = mid;
       else hi = mid - 1;
     }
+
     return lo + 1;
   };
 }
@@ -36,9 +41,11 @@ export function parseFile(relPath: string, absPath: string, source: string): Par
   try {
     const result = parseSync(absPath, source);
     const program = result.program as unknown as OxcNode;
+
     if (!program || !Array.isArray((program as { body?: unknown }).body)) {
       return { errors: [`no program body for ${relPath}`] };
     }
+
     return {
       file: {
         relPath,

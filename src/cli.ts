@@ -25,40 +25,43 @@ interface Args {
 function parseArgs(argv: string[]): Args {
   const args: Args = { path: '.', format: 'text', details: false, fast: false, updateBaseline: false, help: false };
   const positional: string[] = [];
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
+
     if (a === '--json') args.format = 'json';
     else if (a === '--format') args.format = parseFormat(optionValue('--format', argv[++i]));
-    else if (a.startsWith('--format='))
-      args.format = parseFormat(optionValue('--format', a.slice('--format='.length)));
+    else if (a.startsWith('--format=')) args.format = parseFormat(optionValue('--format', a.slice('--format='.length)));
     else if (a === '--details' || a === '-d') args.details = true;
     else if (a === '--fast') args.fast = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a === '--config') args.config = optionValue('--config', argv[++i]);
-    else if (a.startsWith('--config='))
-      args.config = optionValue('--config', a.slice('--config='.length));
+    else if (a.startsWith('--config=')) args.config = optionValue('--config', a.slice('--config='.length));
     else if (a === '--base') args.base = optionValue('--base', argv[++i]);
-    else if (a.startsWith('--base='))
-      args.base = optionValue('--base', a.slice('--base='.length));
+    else if (a.startsWith('--base=')) args.base = optionValue('--base', a.slice('--base='.length));
     else if (a === '--baseline') args.baseline = optionValue('--baseline', argv[++i]);
-    else if (a.startsWith('--baseline='))
-      args.baseline = optionValue('--baseline', a.slice('--baseline='.length));
+    else if (a.startsWith('--baseline=')) args.baseline = optionValue('--baseline', a.slice('--baseline='.length));
     else if (a === '--update-baseline') args.updateBaseline = true;
     else if (a.startsWith('-')) throw new Error(`unknown option '${a}'`);
     else positional.push(a);
   }
+
   if (positional.length > 1) throw new Error('expected at most one path');
+
   if (positional[0]) args.path = positional[0];
+
   return args;
 }
 
 function optionValue(option: string, raw: string | undefined): string {
   if (!raw || raw.startsWith('-')) throw new Error(`${option} requires a value`);
+
   return raw;
 }
 
 function parseFormat(raw: string | undefined): Format {
   if (raw === 'text' || raw === 'json' || raw === 'sarif' || raw === 'shields') return raw;
+
   throw new Error(`unknown --format '${raw ?? ''}' (expected text, json, sarif, or shields)`);
 }
 
@@ -89,21 +92,23 @@ Baseline: adopt an existing repo's findings, then fail only on new ones.
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+
   if (args.help) {
     process.stdout.write(HELP + '\n');
-    process.exit(0);
+
+    return;
   }
 
   try {
     validateArgs(args);
     const config = loadConfig(args.path, args.config);
+
     if (args.fast) {
       config.duplicates.enabled = false;
       config.deadCode.enabled = false;
     }
-    const result = args.base
-      ? await analyzeGitBase(args.path, args.base, config)
-      : await analyze(args.path, config);
+
+    const result = args.base ? await analyzeGitBase(args.path, args.base, config) : await analyze(args.path, config);
     assertAnalysisComplete(result);
 
     // Record mode: write today's findings and leave. Independent of --format.
@@ -112,12 +117,14 @@ async function main(): Promise<void> {
       process.stderr.write(
         `stopslop: baseline written to ${args.baseline} (${result.findings.length} findings accepted)\n`,
       );
-      process.exit(0);
+
+      return;
     }
 
     // Gate mode: report and exit on findings NOT in the baseline. The score
     // stays the full state; findings represent the current gate state.
     let reported = result;
+
     if (args.baseline) {
       const { kept, suppressed } = applyBaseline(result.findings, readBaseline(args.baseline));
       reported = { ...result, findings: kept, baselineSuppressed: suppressed };
@@ -132,14 +139,16 @@ async function main(): Promise<void> {
       // result. Hard analysis errors have already failed above. A baseline, when
       // supplied, affects the badge exactly as it affects the normal CI gate.
       process.stdout.write(toBadge(reported));
-      process.exit(0);
+
+      return;
     } else {
       process.stdout.write(renderTerminal(reported, args.details) + '\n');
     }
-    process.exit(reported.findings.length > 0 ? 1 : 0);
+
+    process.exitCode = reported.findings.length > 0 ? 1 : 0;
   } catch (err) {
     process.stderr.write('stopslop: ' + (err as Error).message + '\n');
-    process.exit(2);
+    process.exitCode = 2;
   }
 }
 
@@ -147,6 +156,7 @@ function validateArgs(args: Args): void {
   if (args.base && (args.baseline || args.updateBaseline)) {
     throw new Error('--base is mutually exclusive with --baseline and --update-baseline');
   }
+
   if (args.updateBaseline && !args.baseline) {
     throw new Error('--update-baseline requires --baseline <file>');
   }
@@ -154,5 +164,5 @@ function validateArgs(args: Args): void {
 
 main().catch((err: unknown) => {
   process.stderr.write('stopslop: ' + (err as Error).message + '\n');
-  process.exit(2);
+  process.exitCode = 2;
 });

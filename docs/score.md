@@ -98,12 +98,13 @@ Alongside the absolute score, the report anchors the repo against the reference
 corpus: the share of the 41 benchmark repos with a strictly lower **core score**
 — the score computed from the three signals measured identically everywhere
 (god, duplication, complexity; dead code is excluded as infrastructure-dependent).
+The comparison uses the original class and module findings and the original
+folded complexity calculation. The absolute score uses the separate function
+findings and includes God Function when enabled. A function that exceeds either the logic
+or JSX limit contributes one finding to the complexity density.
 The comparison uses *your* weights/floors/budgets, so a custom config re-ranks
 the corpus with the same yardstick it applies to your repo. It appears only when
 all three core signals were measured (`--fast` has no percentile).
-
-This is context, not a second verdict: "43/100, worse than 60% of reference
-repos" tells you where the number sits among codebases nobody calls slop.
 
 ## What the score means — and what it does *not*
 

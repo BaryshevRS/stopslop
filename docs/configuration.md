@@ -2,8 +2,10 @@
 
 stopslop reads `stopslop.json` from the analyzed directory (or `--config <path>`).
 Every field is optional and merged over the defaults, so a config only needs the
-knobs you want to change. Defaults are calibrated on a 22-repo TypeScript corpus
-(see [thresholds.md](thresholds.md)).
+knobs you want to change. The existing class and module thresholds were calibrated
+on a 22-repo TypeScript corpus. [Calibration](thresholds.md)
+The example below enables the experimental `godFunction` check; it is disabled
+when omitted.
 
 The CLI validates StopSlop-owned fields at runtime as well as publishing the
 schema: unknown properties, wrong types, and out-of-range values are errors
@@ -15,8 +17,10 @@ rather than silently ignored configuration.
 {
   "$schema": "https://unpkg.com/stopslop/schema.json",
   "cognitiveComplexity": 15,
+  "jsxComplexity": 15,
   "godModule": { "minMembers": 15, "minClusters": 3, "minComplexity": 150, "sizeMembers": 37, "sizeComplexity": 350 },
   "godClass": { "minMembers": 12, "minClusters": 3, "minComplexity": 90, "sizeMembers": 30, "sizeComplexity": 200 },
+  "godFunction": { "minMembers": 12, "minClusters": 2, "sizeMembers": 30, "sizeComplexity": 90 },
   "multipleExportedClasses": { "maxPerFile": 1 },
   "duplicates": { "minTokens": 50, "minLines": 5, "ignoreIdentifiers": false, "ignoreLiterals": false },
   "deadCode": { "exports": true, "dependencies": true, "files": true, "orphans": true, "production": false },
@@ -51,13 +55,30 @@ Set any check to `false` to turn it off entirely:
 
 ### `cognitiveComplexity` — number | false
 
-Functions whose cognitive complexity (Campbell / SonarSource spec) is **strictly
-above** this value are reported. Default **15** (the Sonar community default; on
-the corpus it sits between count p95 ≈ 13 and p99 ≈ 38). Lower = stricter.
+Functions whose cognitive complexity **outside JSX elements and fragments** is
+strictly above this value are reported. Default **15**. Each function starts at
+depth zero, including callbacks inside JSX and Hooks. Conditionals that wrap
+JSX elements belong to the outside score.
 
 ```json
 { "cognitiveComplexity": 20 }
 ```
+
+### `jsxComplexity` — number | false
+
+Reports a function whose expressions **inside JSX elements and fragments**
+have cognitive complexity strictly above the limit. Default **15**. The
+outside score and JSX score each have their own limit. Callback bodies are
+scored in their own function. A finding starts at the first JSX element or
+fragment that contributes complexity.
+
+```json
+{ "cognitiveComplexity": 15, "jsxComplexity": 15 }
+```
+
+With `cognitiveComplexity: false`, provide a numeric `jsxComplexity` to enable
+the JSX check on its own. `jsxComplexity: false` disables the JSX check alone.
+JSX findings use the `jsx-cognitive-complexity` rule ID in JSON and SARIF.
 
 ### `godClass` / `godModule` — object | false
 
@@ -89,6 +110,33 @@ demand more distinct responsibilities before flagging dispersion.
   "godModule": false
 }
 ```
+
+### `godFunction` — object | false
+
+This experimental check is **disabled by default**. Set `"godFunction": {}`
+to enable it with the thresholds below, or provide an object with overrides.
+Once enabled, its findings affect the score and exit code like other findings.
+
+Examines functions that contain local functions or callbacks. The dispersion
+check uses [SArF](https://arxiv.org/abs/1306.2096) to find groups of local
+functions and captured bindings. Each dependency edge gets weight equal to
+the reciprocal of the number of functions that reference its target.
+`--details` and JSON show candidate groups and the dependencies across each
+group's boundary.
+
+| Field | Meaning | Default |
+|---|---|---:|
+| `minMembers` | Minimum local functions for the dispersion check | 12 |
+| `minClusters` | Minimum candidate groups with at least two functions each | 2 |
+| `sizeMembers` | Local function count that triggers a size finding | 30 |
+| `sizeComplexity` | Sum of nested functions' independent complexities that triggers a size finding | 90 |
+
+Dispersion requires both thresholds. The size check requires either threshold
+and at least two directly nested functions. The complexity sum includes
+inline JSX callbacks and deeper nested functions. Candidate grouping uses
+declarations and callbacks registered directly in the function body. For
+React imports, a `useState` or `useReducer` setter resolves to its state binding.
+These default thresholds are provisional.
 
 ### `multipleExportedClasses` — object | false
 

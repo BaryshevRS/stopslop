@@ -8,10 +8,10 @@ import { computeCohesion } from './cohesion.js';
 // complexity". We take the IDEA of a combined detection strategy from Marinescu
 // (ICSM 2004); the calibrated constants are ours.
 
-const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n);
+const complexityOf = (n: OxcNode): number => computeCognitiveComplexity(n, true);
 
 function functionCount(unit: CohesionUnit): number {
-  return unit.members.filter((m) => m.kind === 'function').length;
+  return unit.members.filter(m => m.kind === 'function').length;
 }
 function totalComplexity(unit: CohesionUnit): number {
   return unit.members.reduce((sum, m) => sum + m.complexity, 0);
@@ -26,10 +26,12 @@ function totalComplexity(unit: CohesionUnit): number {
 function splitClusters(unit: CohesionUnit): { groups: string[][]; standalone: string[] } {
   const groups: string[][] = [];
   const standalone: string[] = [];
+
   for (const c of unit.clusters) {
     if (c.length >= 2) groups.push(c);
     else if (c[0]) standalone.push(c[0]);
   }
+
   return { groups, standalone };
 }
 
@@ -48,17 +50,21 @@ function godAxis(unit: CohesionUnit, gate: GodGate): GodAxis {
   const members = functionCount(unit);
   const total = totalComplexity(unit);
   const { groups } = splitClusters(unit);
+
   if (members >= gate.minMembers && groups.length >= gate.minClusters && total >= gate.minComplexity) {
     return 'dispersion';
   }
+
   if (members >= gate.sizeMembers && total >= gate.sizeComplexity) {
     return 'size';
   }
+
   return null;
 }
 
 function cohesionData(unit: CohesionUnit, axis: GodAxis): Record<string, unknown> {
   const { groups, standalone } = splitClusters(unit);
+
   return {
     axis,
     members: functionCount(unit),
@@ -77,11 +83,9 @@ function isBarrelFile(file: ParsedFile): boolean {
   const body = (file.program.body as OxcNode[]) ?? [];
   let reexports = 0;
   let other = 0;
+
   for (const node of body) {
-    if (
-      (node.type === 'ExportNamedDeclaration' || node.type === 'ExportAllDeclaration') &&
-      node.source
-    ) {
+    if ((node.type === 'ExportNamedDeclaration' || node.type === 'ExportAllDeclaration') && node.source) {
       reexports++;
     } else if (node.type === 'ImportDeclaration') {
       // ignore
@@ -89,6 +93,7 @@ function isBarrelFile(file: ParsedFile): boolean {
       other++;
     }
   }
+
   return reexports > 0 && other === 0;
 }
 
@@ -96,16 +101,21 @@ function countExportedClasses(file: ParsedFile): { count: number; firstLine: num
   const body = (file.program.body as OxcNode[]) ?? [];
   const names: string[] = [];
   let firstLine = 1;
+
   for (const node of body) {
     let decl: OxcNode | null = null;
+
     if (node.type === 'ExportNamedDeclaration' && node.declaration) decl = node.declaration as OxcNode;
     else if (node.type === 'ExportDefaultDeclaration' && node.declaration) decl = node.declaration as OxcNode;
+
     if (decl && (decl.type === 'ClassDeclaration' || decl.type === 'ClassExpression')) {
       const id = decl.id as OxcNode | undefined;
       names.push(id ? String(id.name) : '<anonymous>');
+
       if (names.length === 1) firstLine = file.lineAt(node.start);
     }
   }
+
   return { count: names.length, firstLine, names };
 }
 
@@ -115,13 +125,16 @@ function detectGodModule(file: ParsedFile, config: ResolvedConfig): Finding | nu
   unit.clusters = cohesion.clusters;
   unit.hubs = cohesion.hubs;
   const axis = godAxis(unit, config.godModule);
+
   if (!axis) return null;
+
   const { groups } = splitClusters(unit);
   const n = functionCount(unit);
   const message =
     axis === 'dispersion'
       ? `Module has ${n} top-level definitions across ${groups.length} unrelated responsibility groups`
       : `Module has ${n} top-level definitions (total complexity ${totalComplexity(unit)}) — too much in one file`;
+
   return {
     kind: 'god-module',
     file: file.relPath,
@@ -136,15 +149,19 @@ function detectGodModule(file: ParsedFile, config: ResolvedConfig): Finding | nu
 
 function detectGodClasses(file: ParsedFile, config: ResolvedConfig): Finding[] {
   const findings: Finding[] = [];
+
   for (const unit of extractClasses(file, complexityOf)) {
     const cohesion = computeCohesion(unit.members, config.hubFanInRatio);
     unit.clusters = cohesion.clusters;
     unit.hubs = cohesion.hubs;
     const axis = godAxis(unit, config.godClass);
+
     if (!axis) continue;
+
     const { groups, standalone } = splitClusters(unit);
     const n = functionCount(unit);
     let message: string;
+
     if (axis === 'dispersion') {
       const tail = standalone.length > 0 ? ` (+${standalone.length} standalone)` : '';
       message = `Class ${unit.name}: ${n} methods across ${groups.length} unrelated responsibility groups${tail}`;
@@ -152,6 +169,7 @@ function detectGodClasses(file: ParsedFile, config: ResolvedConfig): Finding[] {
       // size axis: densely connected but far too large (WMC)
       message = `Class ${unit.name}: ${n} methods, total complexity ${totalComplexity(unit)} — a single unit doing far too much`;
     }
+
     findings.push({
       kind: 'god-class',
       file: file.relPath,
@@ -163,12 +181,15 @@ function detectGodClasses(file: ParsedFile, config: ResolvedConfig): Finding[] {
       preliminary: config.preliminary,
     });
   }
+
   return findings;
 }
 
 function detectMultipleExportedClasses(file: ParsedFile, config: ResolvedConfig): Finding | null {
   const exported = countExportedClasses(file);
+
   if (exported.count <= config.multipleExportedClasses.maxPerFile) return null;
+
   return {
     kind: 'multiple-exported-classes',
     file: file.relPath,
@@ -183,17 +204,22 @@ function detectMultipleExportedClasses(file: ParsedFile, config: ResolvedConfig)
 
 function analyzeFile(file: ParsedFile, config: ResolvedConfig): Finding[] {
   if (isBarrelFile(file)) return [];
+
   const findings: Finding[] = [];
 
   if (config.godModule.enabled) {
     const f = detectGodModule(file, config);
+
     if (f) findings.push(f);
   }
+
   if (config.godClass.enabled) {
     findings.push(...detectGodClasses(file, config));
   }
+
   if (config.multipleExportedClasses.enabled) {
     const f = detectMultipleExportedClasses(file, config);
+
     if (f) findings.push(f);
   }
 

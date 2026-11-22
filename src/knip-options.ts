@@ -1,11 +1,4 @@
-import {
-  copyFileSync,
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import type { KnipConfiguration } from 'knip';
@@ -52,6 +45,7 @@ export async function createKnipOptions(
   try {
     writeFileSync(bootstrapManifestPath, JSON.stringify(manifest));
     writeFileSync(bootstrapConfigPath, JSON.stringify({ ...KNIP_DEFAULTS, ...config.knip }));
+
     if (existsSync(pnpmWorkspacePath)) {
       copyFileSync(pnpmWorkspacePath, bootstrapPnpmWorkspacePath);
     }
@@ -73,6 +67,7 @@ export async function createKnipOptions(
     knipOptions.cacheLocation = join(root, 'node_modules', '.cache', 'knip');
     knipOptions.config = undefined;
     knipOptions.configFilePath = undefined;
+
     for (const catalog of knipOptions.catalog) {
       catalog.filePath = resolve(root, relative(bootstrap, catalog.filePath)).replaceAll('\\', '/');
     }

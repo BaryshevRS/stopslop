@@ -1,11 +1,13 @@
 import { relative, sep } from 'node:path';
-import { configFilePath } from '../config.js';
+import { configFilePath, DEFAULT_GOD_FUNCTION, jsxComplexityGate } from '../config.js';
 import type { AnalyzeResult } from '../index.js';
 import type { FindingKind } from '../types.js';
 import { rulesFor } from './rules.js';
 
 /**
- * 6: optional `gitBase` records the Git ref, resolved commit, and suppression counts.
+ * 6: `god-function` and `jsx-cognitive-complexity` add findings and thresholds. The core corpus percentile
+ *    still uses the original signals; the current score uses the new rules.
+ *    Optional `gitBase` records the Git ref, resolved commit, and suppression counts.
  *    Added within 6, nothing removed: `configHints` (what Knip reports missing
  *    from the configuration), `configFile` (where those settings are read), and
  *    `rules` (why each reported kind matters and what resolves it).
@@ -23,8 +25,10 @@ export const SCHEMA_VERSION = 6;
 const KINDS: FindingKind[] = [
   'god-module',
   'god-class',
+  'god-function',
   'duplicate-code',
   'cognitive-complexity',
+  'jsx-cognitive-complexity',
   'unused-export',
   'unused-dependency',
   'unused-file',
@@ -50,13 +54,13 @@ export function toJson(result: AnalyzeResult): string {
       ...(result.baselineSuppressed === undefined
         ? {}
         : { baseline: { suppressed: result.baselineSuppressed, new: result.findings.length } }),
-      ...(result.gitBase === undefined
-        ? {}
-        : { gitBase: { ...result.gitBase, new: result.findings.length } }),
+      ...(result.gitBase === undefined ? {} : { gitBase: { ...result.gitBase, new: result.findings.length } }),
       thresholds: {
         cognitiveComplexity: result.config.cognitiveComplexity,
+        jsxComplexity: jsxComplexityGate(result.config),
         godModule: result.config.godModule,
         godClass: result.config.godClass,
+        godFunction: result.config.godFunction ?? DEFAULT_GOD_FUNCTION,
         multipleExportedClasses: result.config.multipleExportedClasses,
         duplicates: result.config.duplicates,
         deadCode: result.config.deadCode,
@@ -73,9 +77,7 @@ export function toJson(result: AnalyzeResult): string {
       configHints: result.configHints,
       /** Where Knip settings are read from. Nowhere else is consulted. */
       configFile: {
-        path: relative(result.root, configFilePath(result.root, result.config))
-          .split(sep)
-          .join('/'),
+        path: relative(result.root, configFilePath(result.root, result.config)).split(sep).join('/'),
         property: 'knip',
       },
       errors: result.errors,
@@ -86,7 +88,9 @@ export function toJson(result: AnalyzeResult): string {
 }
 
 function summarize(result: AnalyzeResult): Record<string, number> {
-  const counts: Record<string, number> = Object.fromEntries(KINDS.map((k) => [k, 0]));
+  const counts: Record<string, number> = Object.fromEntries(KINDS.map(k => [k, 0]));
+
   for (const f of result.findings) counts[f.kind] = (counts[f.kind] ?? 0) + 1;
+
   return counts;
 }

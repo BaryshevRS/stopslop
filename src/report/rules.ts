@@ -25,7 +25,8 @@ const RULES: Record<FindingKind, Omit<RuleHelp, 'helpUri'>> = {
     summary: 'Function is harder to follow than the threshold allows',
     why:
       'Cognitive complexity counts what a reader has to hold in mind to follow a function: ' +
-      'branches, loops, nesting, and boolean chains (SonarSource specification). Above the ' +
+      'branches, loops, nesting, and boolean chains (SonarSource specification). This rule ' +
+      'measures the function body outside JSX. Above the ' +
       'threshold a function is hard to review and easy to break, and it keeps growing the same ' +
       'way: each new case lands beside the existing ones instead of in a place of its own.',
     fix:
@@ -34,6 +35,18 @@ const RULES: Record<FindingKind, Omit<RuleHelp, 'helpUri'>> = {
       'lookup table. Cutting the body into arbitrary part1/part2 helpers moves the complexity ' +
       'without removing it.',
     config: 'cognitiveComplexity',
+  },
+  'jsx-cognitive-complexity': {
+    summary: 'JSX render exceeds the cognitive complexity threshold',
+    why:
+      'Conditions, nested ternaries, and boolean chains inside JSX make it harder to follow ' +
+      'what a view renders. The rule measures JSX owned by one function. Each callback is ' +
+      'scored independently.',
+    fix:
+      'Extract a self-contained view or simplify the conditions that select what it displays. ' +
+      'Run the check again on the original render and the extracted views. ' +
+      'Each render should fit the JSX budget.',
+    config: 'jsxComplexity',
   },
   'god-module': {
     summary: 'Module mixes unrelated responsibilities or has outgrown one file',
@@ -59,6 +72,19 @@ const RULES: Record<FindingKind, Omit<RuleHelp, 'helpUri'>> = {
       'original delegate to them or disappear; `--details` and the JSON report list the groups. ' +
       'A size-axis finding has no clean boundaries, so split it by responsibility by hand.',
     config: 'godClass',
+  },
+  'god-function': {
+    summary: 'Function contains several extraction candidates or a large amount of nested logic',
+    why:
+      'Local functions can be easy to follow on their own while their enclosing scope mixes ' +
+      'several jobs or contains a large amount of nested logic. The dependency graph connects ' +
+      'local functions to the bindings they capture and gives widely shared dependencies less ' +
+      'weight (SArF).',
+    fix:
+      'Use `--details` or JSON to inspect each candidate and its external dependencies. ' +
+      'Extract a cohesive group into a function, module, or custom Hook and make the remaining ' +
+      'dependencies explicit. A size finding with no group calls for manual review.',
+    config: 'godFunction',
   },
   'multiple-exported-classes': {
     summary: 'File exports more than one class',
@@ -139,7 +165,9 @@ export const RULE_KINDS = Object.keys(RULES) as FindingKind[];
 /** Help for the kinds present in a set of findings, keyed by kind. */
 export function rulesFor(findings: readonly Finding[]): Partial<Record<FindingKind, RuleHelp>> {
   const rules: Partial<Record<FindingKind, RuleHelp>> = {};
+
   for (const { kind } of findings) rules[kind] ??= ruleHelp(kind);
+
   return rules;
 }
 

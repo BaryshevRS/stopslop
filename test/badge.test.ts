@@ -15,6 +15,7 @@ function result(slop: Partial<SlopScore>): AnalyzeResult {
     totalSignals: 4,
     ...slop,
   };
+
   // Only `.slop` and `.findings` are read; the rest is filler for this unit test.
   return { slop: full, findings: [] } as unknown as AnalyzeResult;
 }

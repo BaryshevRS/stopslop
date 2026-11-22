@@ -16,10 +16,7 @@ it('uses the committed baseline to determine the badge gate state', () => {
   const projectRoot = process.cwd();
   const fixture = mkdtempSync(join(tmpdir(), 'stop-slop-cli-badge-'));
   const baseline = join(fixture, '.stopslop-baseline.json');
-  const branches = Array.from(
-    { length: 20 },
-    (_, index) => `if (value === ${index}) score += ${index};`,
-  ).join(' ');
+  const branches = Array.from({ length: 20 }, (_, index) => `if (value === ${index}) score += ${index};`).join(' ');
 
   try {
     writeFileSync(
@@ -35,23 +32,10 @@ it('uses the committed baseline to determine the badge gate state', () => {
       color: 'red',
     });
 
-    const recorded = runCli(
-      projectRoot,
-      fixture,
-      '--baseline',
-      baseline,
-      '--update-baseline',
-    );
+    const recorded = runCli(projectRoot, fixture, '--baseline', baseline, '--update-baseline');
     expect(recorded.status).toBe(0);
 
-    const clear = runCli(
-      projectRoot,
-      fixture,
-      '--baseline',
-      baseline,
-      '--format',
-      'shields',
-    );
+    const clear = runCli(projectRoot, fixture, '--baseline', baseline, '--format', 'shields');
     expect(clear.status).toBe(0);
     expect(JSON.parse(clear.stdout)).toMatchObject({
       label: 'AI slop',

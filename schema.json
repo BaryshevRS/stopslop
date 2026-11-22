@@ -17,7 +17,20 @@
         },
         {
           "type": "number",
-          "description": "Report functions strictly above this cognitive complexity.",
+          "description": "Report functions strictly above this cognitive complexity outside JSX.",
+          "default": 15,
+          "minimum": 0
+        }
+      ]
+    },
+    "jsxComplexity": {
+      "anyOf": [
+        {
+          "const": false
+        },
+        {
+          "type": "number",
+          "description": "Report JSX renders strictly above this cognitive complexity.",
           "default": 15,
           "minimum": 0
         }
@@ -103,6 +116,44 @@
               "type": "number",
               "description": "Complexity threshold for the size gate.",
               "default": 200,
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "godFunction": {
+      "description": "Experimental; disabled by default. Set to an object to enable.",
+      "anyOf": [
+        {
+          "const": false
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minMembers": {
+              "type": "number",
+              "description": "Minimum local functions for the dispersion gate.",
+              "default": 12,
+              "minimum": 0
+            },
+            "minClusters": {
+              "type": "number",
+              "description": "Minimum extraction candidates for the dispersion gate.",
+              "default": 2,
+              "minimum": 2
+            },
+            "sizeMembers": {
+              "type": "number",
+              "description": "Local function count that triggers the size gate.",
+              "default": 30,
+              "minimum": 0
+            },
+            "sizeComplexity": {
+              "type": "number",
+              "description": "Total nested complexity that triggers the size gate.",
+              "default": 90,
               "minimum": 0
             }
           }

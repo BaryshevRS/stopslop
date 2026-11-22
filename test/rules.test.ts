@@ -9,7 +9,7 @@ import type { AnalyzeResult, Finding } from '../src/index.js';
 const rulesDoc = readFileSync(new URL('../docs/rules.md', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 
 describe('rule help', () => {
-  it.each(RULE_KINDS)('%s links to its own section of docs/rules.md', (kind) => {
+  it.each(RULE_KINDS)('%s links to its own section of docs/rules.md', kind => {
     const rule = ruleHelp(kind);
     expect(rule.helpUri).toMatch(/\/docs\/rules\.md#/);
     const anchor = rule.helpUri.split('#')[1];
@@ -24,8 +24,10 @@ describe('rule help', () => {
       symbol: 'feature',
       line: 3,
       severity: 'warn',
-      message: '`feature` is only used by the test `src/feature.test.ts`; connect it to production code, or remove it and its test if unneeded',
+      message:
+        '`feature` is only used by the test `src/feature.test.ts`; connect it to production code, or remove it and its test if unneeded',
     };
+
     const result = {
       root: '/workspace/project',
       fileCount: 1,

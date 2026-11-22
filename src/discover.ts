@@ -57,7 +57,8 @@ const GENERATED_MARKERS = [
 
 function hasIgnoredSuffix(name: string): boolean {
   const lower = name.toLowerCase();
-  return IGNORED_SUFFIXES.some((s) => lower.endsWith(s));
+
+  return IGNORED_SUFFIXES.some(s => lower.endsWith(s));
 }
 
 const TEST_DIR_NAMES = new Set([
@@ -75,7 +76,8 @@ const TEST_DIR_NAMES = new Set([
 
 function isInTestDir(relPath: string): boolean {
   const parts = relPath.split('/');
-  return parts.some((p) => TEST_DIR_NAMES.has(p));
+
+  return parts.some(p => TEST_DIR_NAMES.has(p));
 }
 
 // The same naming conventions read from the other side. Discovery uses them to
@@ -87,12 +89,14 @@ function isInTestDir(relPath: string): boolean {
 function stemOf(relPath: string): string {
   const name = relPath.slice(relPath.lastIndexOf('/') + 1).toLowerCase();
   const dot = name.lastIndexOf('.');
+
   return dot > 0 ? name.slice(0, dot) : name;
 }
 
 /** `foo.test.ts`, `foo.spec.tsx`, or anything under a test directory. */
 export function isTestPath(relPath: string): boolean {
   const stem = stemOf(relPath);
+
   return stem.endsWith('.test') || stem.endsWith('.spec') || isInTestDir(relPath);
 }
 
@@ -104,13 +108,16 @@ export function isStoryPath(relPath: string): boolean {
 /** Convert a gitignore-ish glob into a RegExp matched against POSIX rel paths. */
 export function globToRegExp(glob: string): RegExp {
   let re = '';
+
   for (let i = 0; i < glob.length; i++) {
     const ch = glob[i]!;
+
     if (ch === '*') {
       if (glob[i + 1] === '*') {
         // ** → any number of path segments
         re += '.*';
         i++;
+
         if (glob[i + 1] === '/') i++; // consume the slash after **
       } else {
         re += '[^/]*';
@@ -123,6 +130,7 @@ export function globToRegExp(glob: string): RegExp {
       re += ch;
     }
   }
+
   return new RegExp(`^${re}$`);
 }
 
@@ -132,13 +140,17 @@ const MAX_LINE_LENGTH = 2000;
 function looksGeneratedOrBundled(absPath: string): boolean {
   try {
     const head = readFileSync(absPath, 'utf8').slice(0, 64_000);
-    if (GENERATED_MARKERS.some((m) => head.slice(0, 500).toLowerCase().includes(m))) return true;
+
+    if (GENERATED_MARKERS.some(m => head.slice(0, 500).toLowerCase().includes(m))) return true;
+
     // bundled/minified: at least one very long line
     let lineLen = 0;
+
     for (let i = 0; i < head.length; i++) {
       if (head.charCodeAt(i) === 10) lineLen = 0;
       else if (++lineLen > MAX_LINE_LENGTH) return true;
     }
+
     return false;
   } catch {
     return false;
@@ -158,35 +170,49 @@ export function discover(root: string, options: DiscoverOptions): string[] {
   const found: string[] = [];
 
   const stat = statSync(absRoot);
+
   if (stat.isFile()) return [absRoot];
 
   const walkDir = (dir: string): void => {
     let entries: import('node:fs').Dirent[];
+
     try {
       entries = readdirSync(dir, { withFileTypes: true });
     } catch {
       return;
     }
+
     // A generator sentinel marks this whole subtree as generated — skip it.
-    if (entries.some((e) => GENERATOR_SENTINELS.has(e.name))) return;
+    if (entries.some(e => GENERATOR_SENTINELS.has(e.name))) return;
+
     for (const entry of entries) {
       const abs = dir + sep + entry.name;
       const rel = relative(absRoot, abs).split(sep).join('/');
-      if (userIgnore.some((re) => re.test(rel))) continue;
+
+      if (userIgnore.some(re => re.test(rel))) continue;
+
       if (entry.isDirectory()) {
         if (IGNORED_DIRS.has(entry.name) || entry.name.startsWith('.')) continue;
+
         walkDir(abs);
       } else if (entry.isFile()) {
         const dot = entry.name.lastIndexOf('.');
         const ext = dot >= 0 ? entry.name.slice(dot) : '';
+
         if (!EXTENSIONS.has(ext)) continue;
+
         if (hasIgnoredSuffix(entry.name)) continue;
+
         if (isInTestDir(rel)) continue;
+
         if (!options.skipGeneratedCheck && looksGeneratedOrBundled(abs)) continue;
+
         found.push(abs);
       }
     }
   };
+
   walkDir(absRoot);
+
   return found.sort();
 }

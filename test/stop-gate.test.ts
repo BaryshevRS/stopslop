@@ -20,6 +20,7 @@ afterEach(() => {
 
 function git(root: string, ...args: string[]) {
   const result = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+
   if (result.status !== 0) throw new Error(result.stderr);
 }
 
@@ -31,6 +32,7 @@ function repository(): string {
   writeFileSync(join(root, 'sample.ts'), 'export const stable = 1;\n');
   git(root, 'add', 'sample.ts');
   git(root, '-c', 'user.name=Stop Slop Test', '-c', 'user.email=stop-slop@example.test', 'commit', '-m', 'base');
+
   return root;
 }
 
@@ -81,17 +83,22 @@ function runHook(input: Record<string, unknown>, args: string[] = [], env = {}):
     encoding: 'utf8',
     env: { ...inherited, ...env },
   });
+
   expect(result.status).toBe(0);
+
   return result.stdout.trim() === '' ? undefined : (JSON.parse(result.stdout) as HookAnswer);
 }
 
 /** What a Claude Code, Codex, or Gemini CLI hook hands back: a block decision. */
 function feedback(input: Record<string, unknown>): string | undefined {
   const answer = runHook({ hook_event_name: 'Stop', ...input });
+
   if (answer === undefined) return undefined;
+
   // Codex rejects any field beyond its schema, so the answer carries nothing else.
   expect(Object.keys(answer).sort()).toEqual(['decision', 'reason']);
   expect(answer.decision).toBe('block');
+
   return answer.reason;
 }
 

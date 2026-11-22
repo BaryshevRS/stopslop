@@ -26,11 +26,7 @@ export function isTypeNode(type: string): boolean {
 }
 
 function isNode(value: unknown): value is OxcNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
+  return typeof value === 'object' && value !== null && typeof (value as { type?: unknown }).type === 'string';
 }
 
 export interface Visitor {
@@ -44,17 +40,19 @@ export interface Visitor {
  * returning `false` prunes children (used to hand control to sub-walkers).
  */
 export function walk(root: OxcNode, visitor: Visitor): void {
-  const stack: Array<{ node: OxcNode; parent: OxcNode | null }> = [
-    { node: root, parent: null },
-  ];
+  const stack: Array<{ node: OxcNode; parent: OxcNode | null }> = [{ node: root, parent: null }];
   // Iterative post-order is awkward; use recursion for clarity — TS ASTs are shallow.
   function visit(node: OxcNode, parent: OxcNode | null): void {
     if (isTypeNode(node.type)) return;
+
     const descend = visitor.enter?.(node, parent);
+
     if (descend !== false) {
       for (const key in node) {
         if (key === 'type' || key === 'start' || key === 'end') continue;
+
         const value = node[key];
+
         if (Array.isArray(value)) {
           for (const child of value) if (isNode(child)) visit(child, node);
         } else if (isNode(value)) {
@@ -62,6 +60,7 @@ export function walk(root: OxcNode, visitor: Visitor): void {
         }
       }
     }
+
     visitor.leave?.(node, parent);
   }
   void stack;
@@ -76,5 +75,6 @@ export function collect(root: OxcNode, type: string): OxcNode[] {
       if (node.type === type) out.push(node);
     },
   });
+
   return out;
 }

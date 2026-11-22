@@ -30,7 +30,7 @@ function issues(partial: Partial<Record<keyof Issues, Issue[]>>): Issues {
         'catalog',
         'cycles',
       ] as (keyof Issues)[]
-    ).map((k) => [k, {}]),
+    ).map(k => [k, {}]),
   ) as Issues;
 
   for (const [type, list] of Object.entries(partial) as [keyof Issues, Issue[]][]) {
@@ -39,6 +39,7 @@ function issues(partial: Partial<Record<keyof Issues, Issue[]>>): Issues {
       byFile[issue.symbol] = issue;
     }
   }
+
   return empty;
 }
 
@@ -58,16 +59,18 @@ describe('dead code (Knip)', () => {
   it('maps unused exports and unused exported types alike', () => {
     const findings = map(
       issues({
-        exports: [issue({ type: 'exports', filePath: '/repo/src/a.ts', symbol: 'helper', line: 12, symbolType: 'function' })],
+        exports: [
+          issue({ type: 'exports', filePath: '/repo/src/a.ts', symbol: 'helper', line: 12, symbolType: 'function' }),
+        ],
         types: [issue({ type: 'types', filePath: '/repo/src/a.ts', symbol: 'Options', line: 3, symbolType: 'type' })],
       }),
     );
 
-    expect(findings.map((f) => [f.kind, f.file, f.symbol, f.line])).toEqual([
+    expect(findings.map(f => [f.kind, f.file, f.symbol, f.line])).toEqual([
       ['unused-export', 'src/a.ts', 'helper', 12],
       ['unused-export', 'src/a.ts', 'Options', 3],
     ]);
-    expect(findings.every((f) => f.severity === 'warn')).toBe(true);
+    expect(findings.every(f => f.severity === 'warn')).toBe(true);
   });
 
   it('maps unused dependencies, flagging dev ones, even from a package.json above the root', () => {
@@ -78,14 +81,16 @@ describe('dead code (Knip)', () => {
       }),
     );
 
-    expect(findings.map((f) => [f.kind, f.file, f.symbol, f.data?.dev])).toEqual([
+    expect(findings.map(f => [f.kind, f.file, f.symbol, f.data?.dev])).toEqual([
       ['unused-dependency', 'package.json', 'lodash', false],
       ['unused-dependency', 'package.json', 'jest', true],
     ]);
   });
 
   it('reports unused files as info, with the entry-point caveat', () => {
-    const findings = map(issues({ files: [issue({ type: 'files', filePath: '/repo/src/dead.ts', symbol: 'dead.ts' })] }));
+    const findings = map(
+      issues({ files: [issue({ type: 'files', filePath: '/repo/src/dead.ts', symbol: 'dead.ts' })] }),
+    );
 
     expect(findings).toHaveLength(1);
     expect(findings[0]!.kind).toBe('unused-file');
@@ -115,7 +120,7 @@ describe('dead code (Knip)', () => {
       files: [issue({ type: 'files', filePath: '/repo/src/dead.ts', symbol: 'dead.ts' })],
     });
 
-    expect(map(raw, { files: false, dependencies: false }).map((f) => f.kind)).toEqual(['unused-export']);
-    expect(map(raw, { exports: false }).map((f) => f.kind)).toEqual(['unused-dependency', 'unused-file']);
+    expect(map(raw, { files: false, dependencies: false }).map(f => f.kind)).toEqual(['unused-export']);
+    expect(map(raw, { exports: false }).map(f => f.kind)).toEqual(['unused-dependency', 'unused-file']);
   });
 });

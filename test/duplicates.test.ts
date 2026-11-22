@@ -6,7 +6,9 @@ import type { Finding, ParsedFile, ProjectContext, ResolvedConfig } from '../src
 
 function file(relPath: string, source: string): ParsedFile {
   const parsed = parseFile(relPath, `/${relPath}`, source);
+
   if (!parsed.file) throw new Error(parsed.errors.join('; '));
+
   return parsed.file;
 }
 
@@ -22,7 +24,9 @@ async function run(
     configHints: [],
     metrics: {},
   };
+
   const findings = await duplicatesAnalyzer().analyzeProject!(ctx);
+
   return { findings, ctx };
 }
 
@@ -51,7 +55,7 @@ describe('duplicates (Clone Alert)', () => {
     const clone = findings[0]!;
     expect(clone.kind).toBe('duplicate-code');
     expect(clone.data?.occurrences).toHaveLength(2);
-    expect((clone.data?.occurrences as { file: string }[]).map((o) => o.file)).toEqual(['a.ts', 'b.ts']);
+    expect((clone.data?.occurrences as { file: string }[]).map(o => o.file)).toEqual(['a.ts', 'b.ts']);
   });
 
   it('renamed copy-paste: invisible to the Type-1 default, caught with ignoreIdentifiers', async () => {
@@ -65,6 +69,7 @@ describe('duplicates (Clone Alert)', () => {
       ...DEFAULT_CONFIG,
       duplicates: { ...DEFAULT_CONFIG.duplicates, ignoreIdentifiers: true },
     };
+
     const type2 = await run(files(), type2Config);
     expect(type2.findings).toHaveLength(1);
   });
@@ -100,6 +105,7 @@ describe('duplicates (Clone Alert)', () => {
       ...DEFAULT_CONFIG,
       duplicates: { ...DEFAULT_CONFIG.duplicates, enabled: false },
     };
+
     const { findings, ctx } = await run([file('a.ts', block('A')), file('b.ts', block('B'))], config);
 
     expect(findings).toEqual([]);

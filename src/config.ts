@@ -5,6 +5,7 @@ import type {
   CognitiveGate,
   DeadCodeGate,
   DuplicatesGate,
+  GodFunctionGate,
   GodGate,
   MultiClassGate,
   ResolvedConfig,
@@ -45,6 +46,17 @@ export const DEFAULT_SCORE: ScoreConfig = {
   },
 };
 
+/** Provisional gates for closure size and extraction candidates. */
+export const DEFAULT_GOD_FUNCTION: GodFunctionGate = {
+  enabled: false,
+  minMembers: 12,
+  minClusters: 2,
+  sizeMembers: 30,
+  sizeComplexity: 90,
+};
+
+export const DEFAULT_JSX_COMPLEXITY: CognitiveGate = { enabled: true, threshold: 15 };
+
 /**
  * Default thresholds calibrated on the 22-repo corpus (see
  * docs/thresholds.md). The god gates are a conjunction (members AND clusters AND
@@ -54,11 +66,20 @@ export const DEFAULT_SCORE: ScoreConfig = {
  */
 export const DEFAULT_CONFIG: ResolvedConfig = {
   cognitiveComplexity: { enabled: true, threshold: 15 }, // count p95=13, p99=38; Sonar default
+  jsxComplexity: DEFAULT_JSX_COMPLEXITY,
   // Two axes (OR): dispersion = several unrelated groups (clean split boundaries);
   // size = sheer bulk / high WMC (a monolith too big even if fully connected —
   // Marinescu's WMC signal). Size numbers ≈ corpus count p99.
-  godModule: { enabled: true, minMembers: 15, minClusters: 3, minComplexity: 150, sizeMembers: 37, sizeComplexity: 350 },
+  godModule: {
+    enabled: true,
+    minMembers: 15,
+    minClusters: 3,
+    minComplexity: 150,
+    sizeMembers: 37,
+    sizeComplexity: 350,
+  },
   godClass: { enabled: true, minMembers: 12, minClusters: 3, minComplexity: 90, sizeMembers: 30, sizeComplexity: 200 },
+  godFunction: DEFAULT_GOD_FUNCTION,
   multipleExportedClasses: { enabled: true, maxPerFile: 1 },
   // Stage 2. minTokens 50 = Clone Alert's own default (PMD CPD family).
   // Type-1 clones (exact match) by default: identifier normalization (Type-2)
@@ -91,8 +112,10 @@ export interface StopSlopConfig {
   /** Editor-only pointer to the published StopSlop JSON Schema. */
   $schema?: string;
   cognitiveComplexity?: number | false;
+  jsxComplexity?: number | false;
   godModule?: Partial<Omit<GodGate, 'enabled'>> | false;
   godClass?: Partial<Omit<GodGate, 'enabled'>> | false;
+  godFunction?: Partial<Omit<GodFunctionGate, 'enabled'>> | false;
   multipleExportedClasses?: Partial<Omit<MultiClassGate, 'enabled'>> | false;
   duplicates?: Partial<Omit<DuplicatesGate, 'enabled'>> | false;
   deadCode?: Partial<Omit<DeadCodeGate, 'enabled'>> | false;
@@ -118,19 +141,19 @@ function configObject(value: unknown, path: string): ConfigObject {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     invalidConfig(path, 'expected an object');
   }
+
   return value as ConfigObject;
 }
 
-function validateProperties(
-  value: unknown,
-  path: string,
-  validators: Record<string, PropertyValidator>,
-): void {
+function validateProperties(value: unknown, path: string, validators: Record<string, PropertyValidator>): void {
   const object = configObject(value, path);
+
   for (const [property, propertyValue] of Object.entries(object)) {
     const propertyPath = path === '$' ? property : `${path}.${property}`;
     const validate = validators[property];
+
     if (!validate) invalidConfig(propertyPath, 'unknown property');
+
     if (propertyValue !== undefined) validate(propertyValue, propertyPath);
   }
 }
@@ -139,6 +162,7 @@ function validateNumber(value: unknown, path: string, minimum = 0, maximum?: num
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     invalidConfig(path, 'expected a finite number');
   }
+
   if (value < minimum || (maximum !== undefined && value > maximum)) {
     const range = maximum === undefined ? `at least ${minimum}` : `between ${minimum} and ${maximum}`;
     invalidConfig(path, `expected a number ${range}`);
@@ -153,11 +177,7 @@ function validateString(value: unknown, path: string): void {
   if (typeof value !== 'string') invalidConfig(path, 'expected a string');
 }
 
-function validateObjectOrFalse(
-  value: unknown,
-  path: string,
-  validators: Record<string, PropertyValidator>,
-): void {
+function validateObjectOrFalse(value: unknown, path: string, validators: Record<string, PropertyValidator>): void {
   if (value !== false) validateProperties(value, path, validators);
 }
 
@@ -184,13 +204,18 @@ function validateConfig(value: unknown): asserts value is StopSlopConfig | undef
 
   const topLevelValidators = {
     $schema: validateString,
-    cognitiveComplexity: (entry, path) => {
-      if (entry !== false) validateNumber(entry, path);
-    },
+    cognitiveComplexity: validateNumberOrFalse,
+    jsxComplexity: validateNumberOrFalse,
     godModule: (entry, path) => validateObjectOrFalse(entry, path, godValidators),
     godClass: (entry, path) => validateObjectOrFalse(entry, path, godValidators),
-    multipleExportedClasses: (entry, path) =>
-      validateObjectOrFalse(entry, path, { maxPerFile: nonNegativeNumber }),
+    godFunction: (entry, path) =>
+      validateObjectOrFalse(entry, path, {
+        minMembers: nonNegativeNumber,
+        minClusters: (value, nestedPath) => validateNumber(value, nestedPath, 2),
+        sizeMembers: nonNegativeNumber,
+        sizeComplexity: nonNegativeNumber,
+      }),
+    multipleExportedClasses: (entry, path) => validateObjectOrFalse(entry, path, { maxPerFile: nonNegativeNumber }),
     duplicates: (entry, path) =>
       validateObjectOrFalse(entry, path, {
         minTokens: (nested, nestedPath) => validateNumber(nested, nestedPath, 1),
@@ -211,16 +236,14 @@ function validateConfig(value: unknown): asserts value is StopSlopConfig | undef
     },
     score: (entry, path) =>
       validateProperties(entry, path, {
-        weights: (nested, nestedPath) =>
-          validateProperties(nested, nestedPath, scoreSignalValidators),
-        budgets: (nested, nestedPath) =>
-          validateProperties(nested, nestedPath, scoreSignalValidators),
-        floors: (nested, nestedPath) =>
-          validateProperties(nested, nestedPath, scoreSignalValidators),
+        weights: (nested, nestedPath) => validateProperties(nested, nestedPath, scoreSignalValidators),
+        budgets: (nested, nestedPath) => validateProperties(nested, nestedPath, scoreSignalValidators),
+        floors: (nested, nestedPath) => validateProperties(nested, nestedPath, scoreSignalValidators),
       }),
     hubFanInRatio: (entry, path) => validateNumber(entry, path, 0, 1),
     ignore: (entry, path) => {
       if (!Array.isArray(entry)) invalidConfig(path, 'expected an array of strings');
+
       for (let index = 0; index < entry.length; index += 1) {
         validateString(entry[index], `${path}[${index}]`);
       }
@@ -230,35 +253,53 @@ function validateConfig(value: unknown): asserts value is StopSlopConfig | undef
   validateProperties(value, '$', topLevelValidators);
 }
 
-function resolveCognitive(raw: number | false | undefined): CognitiveGate {
-  if (raw === false) return { ...DEFAULT_CONFIG.cognitiveComplexity, enabled: false };
-  return { enabled: true, threshold: raw ?? DEFAULT_CONFIG.cognitiveComplexity.threshold };
+function validateNumberOrFalse(value: unknown, path: string): void {
+  if (value !== false) validateNumber(value, path);
 }
 
-function resolveGod(raw: Partial<Omit<GodGate, 'enabled'>> | false | undefined, base: GodGate): GodGate {
+function resolveCognitive(raw: number | false | undefined, base: CognitiveGate): CognitiveGate {
   if (raw === false) return { ...base, enabled: false };
+
+  return { enabled: true, threshold: raw ?? base.threshold };
+}
+
+/** Configs that disabled complexity before the split keep both checks off. */
+export function jsxComplexityGate(config: ResolvedConfig): CognitiveGate {
+  return (
+    config.jsxComplexity ??
+    resolveCognitive(config.cognitiveComplexity.enabled ? undefined : false, DEFAULT_JSX_COMPLEXITY)
+  );
+}
+
+function resolveGate<T extends { enabled: boolean }>(raw: Partial<Omit<T, 'enabled'>> | false | undefined, base: T): T {
+  if (raw === undefined) return { ...base };
+
+  if (raw === false) return { ...base, enabled: false };
+
   return { ...base, ...raw, enabled: true };
 }
 
-function resolveMultiClass(
-  raw: Partial<Omit<MultiClassGate, 'enabled'>> | false | undefined,
-): MultiClassGate {
+function resolveMultiClass(raw: Partial<Omit<MultiClassGate, 'enabled'>> | false | undefined): MultiClassGate {
   const base = DEFAULT_CONFIG.multipleExportedClasses;
+
   if (raw === false) return { ...base, enabled: false };
+
   return { ...base, ...raw, enabled: true };
 }
 
-function resolveDuplicates(
-  raw: Partial<Omit<DuplicatesGate, 'enabled'>> | false | undefined,
-): DuplicatesGate {
+function resolveDuplicates(raw: Partial<Omit<DuplicatesGate, 'enabled'>> | false | undefined): DuplicatesGate {
   const base = DEFAULT_CONFIG.duplicates;
+
   if (raw === false) return { ...base, enabled: false };
+
   return { ...base, ...raw, enabled: true };
 }
 
 function resolveDeadCode(raw: Partial<Omit<DeadCodeGate, 'enabled'>> | false | undefined): DeadCodeGate {
   const base = DEFAULT_CONFIG.deadCode;
+
   if (raw === false) return { ...base, enabled: false };
+
   return { ...base, ...raw, enabled: true };
 }
 
@@ -273,10 +314,16 @@ function resolveScore(raw: StopSlopConfig['score']): ScoreConfig {
 export function resolveConfig(raw: StopSlopConfig | undefined): ResolvedConfig {
   validateConfig(raw);
   const c = raw ?? {};
+
   return {
-    cognitiveComplexity: resolveCognitive(c.cognitiveComplexity),
-    godModule: resolveGod(c.godModule, DEFAULT_CONFIG.godModule),
-    godClass: resolveGod(c.godClass, DEFAULT_CONFIG.godClass),
+    cognitiveComplexity: resolveCognitive(c.cognitiveComplexity, DEFAULT_CONFIG.cognitiveComplexity),
+    jsxComplexity: resolveCognitive(
+      c.jsxComplexity ?? (c.cognitiveComplexity === false ? false : undefined),
+      DEFAULT_JSX_COMPLEXITY,
+    ),
+    godModule: resolveGate(c.godModule, DEFAULT_CONFIG.godModule),
+    godClass: resolveGate(c.godClass, DEFAULT_CONFIG.godClass),
+    godFunction: resolveGate(c.godFunction, DEFAULT_GOD_FUNCTION),
     multipleExportedClasses: resolveMultiClass(c.multipleExportedClasses),
     duplicates: resolveDuplicates(c.duplicates),
     deadCode: resolveDeadCode(c.deadCode),
@@ -291,17 +338,22 @@ export function resolveConfig(raw: StopSlopConfig | undefined): ResolvedConfig {
 /** Load `stopslop.json` from `dir` (or an explicit path). Missing file → defaults. */
 export function loadConfig(dir: string, explicitPath?: string): ResolvedConfig {
   const path = explicitPath ? resolve(explicitPath) : resolve(dir, 'stopslop.json');
+
   try {
     const raw = JSON.parse(readFileSync(path, 'utf8')) as StopSlopConfig;
+
     return { ...resolveConfig(raw), configFile: realDirectory(path) };
   } catch (err) {
     if (explicitPath) {
       throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
     }
+
     const code = (err as NodeJS.ErrnoException).code;
+
     if (code === 'ENOENT' || code === 'ENOTDIR') {
       return { ...resolveConfig(undefined), configFile: realDirectory(path) };
     }
+
     throw new Error(`Cannot read config at ${path}: ${(err as Error).message}`);
   }
 }

@@ -19,6 +19,7 @@ describe('loadConfig', () => {
   it.each([
     { caseName: 'unknown top-level property', value: { cognitiveComplexitty: 20 } },
     { caseName: 'wrong scalar type', value: { cognitiveComplexity: '20' } },
+    { caseName: 'negative JSX threshold', value: { jsxComplexity: -1 } },
     { caseName: 'negative threshold', value: { godClass: { minComplexity: -1 } } },
     { caseName: 'hubFanInRatio above 1', value: { hubFanInRatio: 1.01 } },
     { caseName: 'ignore containing a non-string', value: { ignore: ['dist/**', 42] } },
@@ -66,13 +67,25 @@ describe('resolveConfig', () => {
   it('returns defaults for empty input', () => {
     const c = resolveConfig(undefined);
     expect(c.cognitiveComplexity).toEqual({ enabled: true, threshold: 15 });
+    expect(c.jsxComplexity).toEqual({ enabled: true, threshold: 15 });
     expect(c.godClass.enabled).toBe(true);
+    expect(c.godFunction?.enabled).toBe(false);
     expect(c.multipleExportedClasses).toEqual({ enabled: true, maxPerFile: 1 });
   });
 
+  it('enables God Function explicitly with default or overridden thresholds', () => {
+    expect(resolveConfig({ godFunction: {} }).godFunction).toMatchObject({ enabled: true, sizeMembers: 30 });
+    expect(resolveConfig({ godFunction: { sizeMembers: 40 } }).godFunction).toMatchObject({
+      enabled: true,
+      sizeMembers: 40,
+    });
+    expect(resolveConfig({ godFunction: false }).godFunction?.enabled).toBe(false);
+  });
+
   it('overrides a scalar threshold', () => {
-    const c = resolveConfig({ cognitiveComplexity: 25 });
+    const c = resolveConfig({ cognitiveComplexity: 25, jsxComplexity: 20 });
     expect(c.cognitiveComplexity).toEqual({ enabled: true, threshold: 25 });
+    expect(c.jsxComplexity).toEqual({ enabled: true, threshold: 20 });
   });
 
   it('disables a check with false', () => {
@@ -117,6 +130,7 @@ describe('resolveConfig', () => {
     const c = resolveConfig({
       score: { weights: { god: 0.5 }, budgets: { duplication: 0.2 }, floors: { duplication: 0.1 } },
     });
+
     expect(c.score.weights.god).toBe(0.5);
     expect(c.score.weights.complexity).toBe(DEFAULT_CONFIG.score.weights.complexity);
     expect(c.score.budgets.duplication).toBe(0.2);

@@ -12,6 +12,7 @@ export function toSarif(result: AnalyzeResult): string {
 
   for (const finding of result.findings) {
     if (seenRules.has(finding.kind)) continue;
+
     seenRules.add(finding.kind);
     // Code Scanning shows fullDescription at the top of an alert and help next
     // to it: why the rule exists and what resolves it, not only what failed.
@@ -36,7 +37,7 @@ export function toSarif(result: AnalyzeResult): string {
     runs: [
       {
         tool: { driver: { name: 'stopslop', rules } },
-        results: result.findings.map((finding) => ({
+        results: result.findings.map(finding => ({
           ruleId: finding.kind,
           level: sarifLevel(finding.severity),
           message: { text: finding.message },
@@ -60,28 +61,35 @@ function sarifLevel(severity: Finding['severity']): 'note' | 'warning' {
 function ruleName(kind: FindingKind): string {
   return kind
     .split('-')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .map(word => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
     .join('');
 }
 
 function locationsFor(root: string, finding: Finding): object[] {
   const primaryUri = artifactUri(root, finding.file);
+
   if (!primaryUri || !isLine(finding.line)) return [];
+
   const occurrences = Array.isArray(finding.data?.occurrences)
-    ? finding.data.occurrences.flatMap((value) => {
+    ? finding.data.occurrences.flatMap(value => {
         const parsed = parseOccurrence(root, value);
+
         return parsed ? [parsed] : [];
       })
     : [];
+
   const primary = occurrences.find(
-    (occurrence) => occurrence.uri === primaryUri && occurrence.startLine === finding.line,
+    occurrence => occurrence.uri === primaryUri && occurrence.startLine === finding.line,
   );
+
   const locations: object[] = [location(primaryUri, finding.line, primary?.endLine)];
   const seen = new Set([JSON.stringify([primaryUri, finding.line])]);
 
   for (const occurrence of occurrences) {
     const key = JSON.stringify([occurrence.uri, occurrence.startLine]);
+
     if (seen.has(key)) continue;
+
     seen.add(key);
     locations.push(location(occurrence.uri, occurrence.startLine, occurrence.endLine));
   }
@@ -97,10 +105,15 @@ interface SarifOccurrence {
 
 function parseOccurrence(root: string, value: unknown): SarifOccurrence | undefined {
   if (!value || typeof value !== 'object') return undefined;
+
   const { file, startLine, endLine } = value as Record<string, unknown>;
+
   if (typeof file !== 'string' || !isLine(startLine)) return undefined;
+
   const uri = artifactUri(root, file);
+
   if (!uri) return undefined;
+
   return {
     uri,
     startLine,
@@ -123,6 +136,7 @@ function artifactUri(root: string, file: string): string | undefined {
   const absolute = normalizedFile.startsWith('/') || /^[A-Za-z]:\//.test(normalizedFile);
   const relative = absolute ? posix.relative(normalizedRoot, normalizedFile) : normalizedFile;
   const normalized = posix.normalize(relative).replace(/^\.\//, '');
+
   if (
     normalized === '.' ||
     normalized === '..' ||
@@ -132,6 +146,7 @@ function artifactUri(root: string, file: string): string | undefined {
   ) {
     return undefined;
   }
+
   return normalized.split('/').map(encodeURIComponent).join('/');
 }
 
